@@ -197,6 +197,41 @@
   .acoes-form { display: flex; gap: 10px; margin-top: 8px; }
   .acoes-form .primario { flex: 1; }
 
+  .selo-pagar.atrasada { border-color: var(--erro); color: var(--erro); }
+  .parcela { color: var(--suave); font-weight: 500; }
+  .dica { color: var(--suave); font-size: .875rem; padding: 0 4px 10px; }
+  input:disabled { opacity: .55; }
+
+  /* resumo do mês */
+  #aba-mes, #aba-fixas { padding-bottom: 80px; }
+  .resumo.quatro .stat:last-child { grid-column: auto; }
+  .a-pagar { color: var(--destaque); }
+  .grupo-titulo { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin: 22px 4px 8px; }
+  .grupo-titulo span + span { letter-spacing: 0; text-transform: none; font-weight: 600; }
+  .pendentes { list-style: none; margin: 0; padding: 0; overflow: hidden; }
+  .pend { display: flex; align-items: center; gap: 4px; min-height: 64px; padding: 6px 14px 6px 6px; }
+  .pend + .pend { border-top: 1px solid var(--borda-suave); }
+  .marcar { width: 44px; height: 44px; flex: none; border-radius: 22px; border: 0; background: transparent; color: var(--ok);
+            display: grid; place-items: center; padding: 0; }
+  .marcar .bola { width: 26px; height: 26px; border-radius: 13px; border: 2px solid var(--borda-forte); display: grid; place-items: center; }
+  .marcar svg { opacity: 0; transition: opacity .15s; }
+  .marcar:hover .bola, .marcar:focus-visible .bola { border-color: var(--ok); }
+  .marcar:hover svg, .marcar:focus-visible svg { opacity: 1; }
+  .pend-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; padding: 6px 4px; border: 0;
+               background: transparent; text-align: left; color: var(--texto); }
+  .pend-info strong { font-weight: 600; overflow-wrap: anywhere; }
+  .pend-info small { color: var(--suave); font-size: 13px; }
+  .pend .valor { flex: none; text-align: right; font-family: var(--fonte-titulo); font-size: 20px; font-weight: 700;
+                 font-variant-numeric: tabular-nums; }
+  .lista-meios { list-style: none; margin: 0; padding: 4px 16px; }
+  .lista-meios li { display: flex; justify-content: space-between; align-items: center; gap: 12px; min-height: 52px; }
+  .lista-meios li + li { border-top: 1px solid var(--borda-suave); }
+  .lista-meios .num-fonte { font-size: 20px; font-weight: 700; text-align: right; }
+  .lista-meios small { display: block; font-family: var(--fonte); font-size: 12px; font-weight: 600; color: var(--destaque); }
+
+  /* fixas */
+  .encerradas .lanc { opacity: .6; }
+
   #aviso { position: fixed; left: 50%; bottom: calc(var(--altura-nav) + var(--seguro-baixo) + 88px); z-index: 40;
            transform: translate(-50%, 30px); opacity: 0; pointer-events: none;
            background: var(--ok); color: var(--bg); font-weight: 600; padding: 12px 18px; border-radius: 12px;
@@ -227,6 +262,9 @@
     .lista-lancamentos { max-width: 760px; }
     .resumo { max-width: 760px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
     .resumo .stat:last-child { grid-column: auto; }
+    .resumo.quatro { max-width: none; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .mes-layout { display: grid; grid-template-columns: minmax(0, 3fr) minmax(280px, 2fr); gap: 24px; align-items: start; }
+    .lista-fixas { max-width: 760px; }
     .fab { position: fixed; bottom: 32px; right: 40px; }
     dialog.sheet { margin: auto; border-radius: 24px; border: 1px solid var(--borda); max-height: calc(100vh - 80px); }
     .sheet-alca { display: none; }
@@ -300,7 +338,17 @@
             </div>
           </div>
         </header>
-        <div class="cartao vazio">O resumo do mês, com o que falta pagar, chega na próxima etapa. Por enquanto, veja tudo em “Lançamentos”.</div>
+        <div id="resumo-mes" class="resumo quatro"></div>
+        <div class="mes-layout">
+          <section>
+            <h2 class="grupo-titulo sobretitulo"><span>Pendentes</span><span id="total-pendentes"></span></h2>
+            <div id="lista-pendentes"></div>
+          </section>
+          <section>
+            <h2 class="grupo-titulo sobretitulo"><span>Gastos por meio de pagamento</span></h2>
+            <div id="lista-meios"></div>
+          </section>
+        </div>
       </section>
 
       <!-- Lançamentos -->
@@ -334,8 +382,15 @@
 
       <!-- Fixas -->
       <section id="aba-fixas" class="aba" hidden>
-        <header class="pagina-topo"><h1>Contas fixas</h1></header>
-        <div class="cartao vazio">Contas fixas e parcelamentos aparecem aqui em breve.</div>
+        <header class="pagina-topo">
+          <h1>Fixas</h1>
+          <div id="segmento-fixas" class="segmento" role="tablist" aria-label="Contas fixas ou parcelamentos">
+            <button type="button" role="tab" data-lista="contas" aria-selected="true">Contas fixas</button>
+            <button type="button" role="tab" data-lista="parcelamentos" aria-selected="false">Parcelamentos</button>
+          </div>
+        </header>
+        <div id="lista-contas-fixas" class="lista-fixas"></div>
+        <div id="lista-parcelamentos" class="lista-fixas" hidden></div>
       </section>
 
       <!-- Evolução -->
@@ -347,7 +402,7 @@
 
     <button id="novo-lancamento" class="fab so-dono" type="button">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
-      Lançar
+      <span id="rotulo-fab">Lançar</span>
     </button>
   </section>
 </main>
@@ -415,6 +470,130 @@
   </form>
 </dialog>
 
+<dialog id="dlg-conta-fixa" class="sheet" aria-labelledby="titulo-conta-fixa">
+  <div class="sheet-alca" aria-hidden="true"></div>
+  <div class="sheet-cabeca">
+    <h2 id="titulo-conta-fixa">Nova conta fixa</h2>
+    <button class="icone" type="button" data-fechar aria-label="Fechar">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+  </div>
+  <form id="form-conta-fixa" class="sheet-corpo" novalidate>
+    <p class="dica">Todo mês ela entra como pendente em “Mês”, no dia escolhido.</p>
+    <div id="cf-tipo" class="segmento campo" role="group" aria-label="Tipo da conta fixa">
+      <button type="button" data-tipo="despesa" aria-pressed="true">Despesa</button>
+      <button type="button" data-tipo="receita" aria-pressed="false">Receita</button>
+    </div>
+    <div class="campo">
+      <label for="cf-valor">Valor previsto</label>
+      <div class="valor-caixa"><span aria-hidden="true">R$</span>
+        <input id="cf-valor" type="text" inputmode="decimal" autocomplete="off" placeholder="0,00" required></div>
+    </div>
+    <div class="campo">
+      <label for="cf-descricao">Descrição</label>
+      <input id="cf-descricao" type="text" autocomplete="off" maxlength="120" required>
+    </div>
+    <div class="linha">
+      <div class="campo">
+        <label for="cf-dia">Dia do mês</label>
+        <input id="cf-dia" type="number" inputmode="numeric" min="1" max="31" required>
+      </div>
+      <div class="campo">
+        <label for="cf-inicio">Começa em</label>
+        <select id="cf-inicio"></select>
+      </div>
+    </div>
+    <div class="campo">
+      <span id="rotulo-cf-meio" class="rotulo-campo">Meio de pagamento</span>
+      <div id="cf-meios" class="chips" role="group" aria-labelledby="rotulo-cf-meio"></div>
+    </div>
+    <div class="campo so-despesa">
+      <span id="rotulo-cf-grupo" class="rotulo-campo">Grupo</span>
+      <div id="cf-grupos" class="segmento tres" role="group" aria-labelledby="rotulo-cf-grupo">
+        <button type="button" data-grupo="essencial" aria-pressed="false">Essencial</button>
+        <button type="button" data-grupo="diversao" aria-pressed="false">Diversão</button>
+        <button type="button" data-grupo="investimento" aria-pressed="false">Investimento</button>
+      </div>
+    </div>
+    <div class="campo">
+      <label for="cf-categoria">Categoria</label>
+      <select id="cf-categoria"></select>
+    </div>
+    <div class="campo">
+      <label for="cf-fim">Último mês</label>
+      <select id="cf-fim"></select>
+    </div>
+    <p id="cf-dica-edicao" class="dica" hidden>As mudanças valem para os lançamentos dela ainda não pagos, deste mês em diante.</p>
+    <div class="acoes-form">
+      <button id="excluir-conta-fixa" class="botao perigo" type="button" hidden>Excluir</button>
+      <button id="salvar-conta-fixa" class="botao primario grande" type="submit">Salvar conta fixa</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="dlg-parcelamento" class="sheet" aria-labelledby="titulo-parcelamento">
+  <div class="sheet-alca" aria-hidden="true"></div>
+  <div class="sheet-cabeca">
+    <h2 id="titulo-parcelamento">Novo parcelamento</h2>
+    <button class="icone" type="button" data-fechar aria-label="Fechar">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+  </div>
+  <form id="form-parcelamento" class="sheet-corpo" novalidate>
+    <div class="campo">
+      <label for="pa-valor">Valor da parcela</label>
+      <div class="valor-caixa"><span aria-hidden="true">R$</span>
+        <input id="pa-valor" type="text" inputmode="decimal" autocomplete="off" placeholder="0,00" required></div>
+    </div>
+    <div class="campo">
+      <label for="pa-descricao">Descrição</label>
+      <input id="pa-descricao" type="text" autocomplete="off" maxlength="120" required>
+    </div>
+    <div class="linha">
+      <div class="campo">
+        <label for="pa-total">Nº de parcelas</label>
+        <input id="pa-total" type="number" inputmode="numeric" min="2" max="120" required>
+      </div>
+      <div class="campo">
+        <label for="pa-data">Data da compra</label>
+        <input id="pa-data" type="date" required>
+      </div>
+    </div>
+    <div class="campo">
+      <span id="rotulo-pa-meio" class="rotulo-campo">Meio de pagamento</span>
+      <div id="pa-meios" class="chips" role="group" aria-labelledby="rotulo-pa-meio"></div>
+    </div>
+    <div class="campo">
+      <span id="rotulo-pa-grupo" class="rotulo-campo">Grupo</span>
+      <div id="pa-grupos" class="segmento tres" role="group" aria-labelledby="rotulo-pa-grupo">
+        <button type="button" data-grupo="essencial" aria-pressed="false">Essencial</button>
+        <button type="button" data-grupo="diversao" aria-pressed="false">Diversão</button>
+        <button type="button" data-grupo="investimento" aria-pressed="false">Investimento</button>
+      </div>
+    </div>
+    <div class="campo">
+      <label for="pa-categoria">Categoria</label>
+      <select id="pa-categoria"></select>
+    </div>
+    <fieldset id="pa-inicio" class="linha">
+      <div class="campo">
+        <label for="pa-primeira">Lançar a partir da parcela</label>
+        <input id="pa-primeira" type="number" inputmode="numeric" min="1" value="1">
+      </div>
+      <div class="campo">
+        <label for="pa-mes">Mês dessa parcela</label>
+        <select id="pa-mes"></select>
+      </div>
+    </fieldset>
+    <p id="pa-resumo" class="dica" aria-live="polite"></p>
+    <p id="pa-dica-edicao" class="dica" hidden>As mudanças valem para as parcelas ainda não pagas. Para mudar o número de parcelas ou os meses, exclua e cadastre de novo.</p>
+    <div class="acoes-form">
+      <button id="excluir-parcelamento" class="botao perigo" type="button" hidden>Excluir</button>
+      <button id="salvar-parcelamento" class="botao primario grande" type="submit">Salvar parcelamento</button>
+    </div>
+  </form>
+</dialog>
+
 <div id="aviso" role="status"></div>
 
 <script type="module">
@@ -466,6 +645,18 @@
     return isoLocal(new Date(d.getFullYear(), d.getMonth() + n, 1));
   }
   const nomeMes = (iso) => MESES_LONGOS[dataDeIso(iso).getMonth()];
+  const fmtMes = (iso) => `${nomeMes(iso)} ${iso.slice(0, 4)}`;            // 'Novembro 2026'
+  function intervaloMeses(de, ate) {
+    const meses = [];
+    for (let m = de; m <= ate; m = somarMeses(m, 1)) meses.push(m);
+    return meses;
+  }
+  // Dia d do mês; dia 31 num mês de 30 dias vira o último dia
+  function diaNoMes(mes, dia) {
+    const d = dataDeIso(mes);
+    const ultimo = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+    return isoLocal(new Date(d.getFullYear(), d.getMonth(), Math.min(dia, ultimo)));
+  }
 
   // Dinheiro: o banco guarda numeric(12,2) ('59.90'); as contas no JS são em centavos inteiros
   const BRL = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -492,6 +683,7 @@
     lixo: svg('<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/>'),
     x: svg('<path d="M6 6l12 12M18 6L6 18"/>', 'stroke-width="2.4"'),
     check: svg('<path d="M5 12l5 5 9-10"/>', 'stroke-width="2.8"'),
+    checkP: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>',
   };
 
   let timerAviso;
@@ -581,6 +773,8 @@
     abrirAba('mes');
     await carregarLeitura();
     await carregarListas();
+    await Promise.all([carregarFixas(), carregarGerados()]);
+    await gerarMes(mesAtual);
     await Promise.all([carregarLancamentos(), carregarHistorico()]);
   }
 
@@ -609,6 +803,7 @@
     });
     $$('.aba').forEach((s) => { s.hidden = s.id !== 'aba-' + nome; });
     window.scrollTo(0, 0);
+    atualizarFab();
   }
 
   // ---------- mês ----------
@@ -618,9 +813,10 @@
     $$('.nome-mes').forEach((el) => { el.textContent = nomeMes(mesAtual); });
     $$('.ano-mes').forEach((el) => { el.textContent = mesAtual.slice(0, 4); });
   }
-  $$('[data-mudar-mes]').forEach((b) => b.addEventListener('click', () => {
+  $$('[data-mudar-mes]').forEach((b) => b.addEventListener('click', async () => {
     mesAtual = somarMeses(mesAtual, Number(b.dataset.mudarMes));
     desenharMes();
+    await gerarMes(mesAtual);
     carregarLancamentos();
   }));
 
@@ -642,6 +838,38 @@
     categorias = rc.data.sort(porNome);
   }
 
+  // ---------- campos compartilhados dos formulários ----------
+  // Chips de meio de pagamento, segmentos e selects de categoria e de mês aparecem nos três formulários
+  function desenharChipsMeio(container, selecionado) {
+    $(container).innerHTML = meios.filter((m) => m.ativo || m.id === selecionado)
+      .map((m) => `<button class="chip" type="button" data-id="${m.id}" aria-pressed="${m.id === selecionado}">${esc(m.nome)}</button>`).join('');
+  }
+  const marcarChips = (container, id) =>
+    $$(`${container} .chip`).forEach((b) => b.setAttribute('aria-pressed', String(Number(b.dataset.id) === id)));
+  // Segmento com data-tipo ou data-grupo nos botões
+  const marcarSegmento = (container, chave, valor) =>
+    $$(`${container} [data-${chave}]`).forEach((b) => b.setAttribute('aria-pressed', String(b.dataset[chave] === valor)));
+
+  function opcoesCategoria(select, tipo, selecionada) {
+    const sel = String(selecionada ?? '');
+    const lista = categorias.filter((c) => c.tipo === tipo && (c.ativo || String(c.id) === sel));
+    $(select).innerHTML = '<option value="">Sem categoria</option>' +
+      lista.map((c) => `<option value="${c.id}">${esc(c.nome)}</option>`).join('');
+    $(select).value = lista.some((c) => String(c.id) === sel) ? sel : '';
+  }
+  function opcoesMeses(select, meses, selecionado, textoVazio) {
+    $(select).innerHTML = (textoVazio ? `<option value="">${textoVazio}</option>` : '') +
+      meses.map((m) => `<option value="${m}">${fmtMes(m)}</option>`).join('');
+    $(select).value = selecionado ?? '';
+  }
+  // De 12 meses atrás a 24 meses à frente, mais os meses pedidos
+  function mesesParaEscolha(...extras) {
+    const atual = inicioMes(hoje());
+    const meses = new Set(intervaloMeses(somarMeses(atual, -12), somarMeses(atual, 24)));
+    extras.filter(Boolean).forEach((m) => meses.add(m));
+    return [...meses].sort();
+  }
+
   // ---------- lançamentos ----------
   let lancamentos = [];   // do mês atual
   let filtro = 'todos';
@@ -654,6 +882,7 @@
     if (mes !== mesAtual) return;   // o mês mudou enquanto buscava
     lancamentos = data;
     desenharLancamentos();
+    desenharResumoMes();
   }
 
   function passaNoFiltro(l, termo) {
@@ -707,9 +936,11 @@
     const c = centavos(l.valor);
     const receita = l.tipo === 'receita';
     const reembolso = !receita && c < 0;
-    const detalhes = [nomeCategoria(l.categoria_id), nomeMeio(l.meio_pagamento_id)].filter(Boolean).map(esc).join(' · ');
-    const pendente = l.pago ? '' : ' <span class="selo-pagar">a pagar</span>';
-    const info = `<span class="info"><strong>${esc(l.descricao)}</strong><small>${detalhes}${pendente}</small></span>`;
+    const detalhes = [nomeCategoria(l.categoria_id), nomeMeio(l.meio_pagamento_id), l.conta_fixa_id ? 'fixa' : '']
+      .filter(Boolean).map(esc).join(' · ');
+    const pendente = l.pago ? '' : ` <span class="selo-pagar">${receita ? 'a receber' : 'a pagar'}</span>`;
+    const parcela = l.parcela ? ` <span class="parcela">${l.parcela}/${totalParcelas(l.parcelamento_id)}</span>` : '';
+    const info = `<span class="info"><strong>${esc(l.descricao)}${parcela}</strong><small>${detalhes}${pendente}</small></span>`;
     const valor = `<span class="valor${receita || reembolso ? ' positivo' : ''}">${receita || reembolso ? '+ ' : ''}${fmtReais(Math.abs(c))}${reembolso ? '<small>reembolso</small>' : ''}</span>`;
     return modoLeitura
       ? `<li><div class="lanc">${info}${valor}</div></li>`
@@ -717,12 +948,14 @@
   }
 
   $('#busca-lancamento').addEventListener('input', desenharLancamentos);
+  function escolherFiltro(nome) {
+    filtro = nome;
+    $$('#filtros-lancamento .chip').forEach((c) => c.setAttribute('aria-pressed', String(c.dataset.filtro === nome)));
+    desenharLancamentos();
+  }
   $('#filtros-lancamento').addEventListener('click', (e) => {
     const b = e.target.closest('[data-filtro]');
-    if (!b) return;
-    filtro = b.dataset.filtro;
-    $$('#filtros-lancamento .chip').forEach((c) => c.setAttribute('aria-pressed', String(c === b)));
-    desenharLancamentos();
+    if (b) escolherFiltro(b.dataset.filtro);
   });
   $('#lista-lancamentos').addEventListener('click', (e) => {
     const b = e.target.closest('.lanc[data-id]');
@@ -773,7 +1006,7 @@
     opcoes.add(calculado);
     if (atual) opcoes.add(atual);
     $('#lanc-mes').innerHTML = [...opcoes].sort()
-      .map((m) => `<option value="${m}">${nomeMes(m)} ${m.slice(0, 4)}</option>`).join('');
+      .map((m) => `<option value="${m}">${fmtMes(m)}</option>`).join('');
     $('#lanc-mes').value = atual || calculado;
   }
 
@@ -796,20 +1029,13 @@
   }
   function marcarMeio(id) {
     meioForm = id;
-    $$('#lanc-meios .chip').forEach((b) => b.setAttribute('aria-pressed', String(Number(b.dataset.id) === id)));
+    marcarChips('#lanc-meios', id);
     atualizarMesForm();
     sugerirPago();
   }
-  function desenharMeiosForm(selecionado) {
-    $('#lanc-meios').innerHTML = meios.filter((m) => m.ativo || m.id === selecionado)
-      .map((m) => `<button class="chip" type="button" data-id="${m.id}" aria-pressed="false">${esc(m.nome)}</button>`).join('');
-  }
-  function desenharCategoriasForm(selecionada = $('#lanc-categoria').value) {
-    const lista = categorias.filter((c) => c.tipo === tipoForm && (c.ativo || String(c.id) === String(selecionada)));
-    $('#lanc-categoria').innerHTML = '<option value="">Sem categoria</option>' +
-      lista.map((c) => `<option value="${c.id}">${esc(c.nome)}</option>`).join('');
-    $('#lanc-categoria').value = lista.some((c) => String(c.id) === String(selecionada)) ? String(selecionada) : '';
-  }
+  const desenharMeiosForm = (selecionado) => desenharChipsMeio('#lanc-meios', selecionado);
+  const desenharCategoriasForm = (selecionada = $('#lanc-categoria').value) =>
+    opcoesCategoria('#lanc-categoria', tipoForm, selecionada);
 
   function abrirLancamento(l = null) {
     if (modoLeitura) return;
@@ -836,7 +1062,6 @@
     if (!l) $('#lanc-valor').focus();
   }
 
-  $('#novo-lancamento').addEventListener('click', () => abrirLancamento());
   $('#lanc-tipo').addEventListener('click', (e) => {
     const b = e.target.closest('[data-tipo]');
     if (b) marcarTipo(b.dataset.tipo);
@@ -909,7 +1134,7 @@
     aviso(registro.mes === mesAtual
       ? (editando ? 'Lançamento atualizado!' : 'Lançamento salvo!')
       : `Salvo em ${nomeMes(registro.mes).toLowerCase()} de ${registro.mes.slice(0, 4)}!`);
-    await Promise.all([carregarLancamentos(), carregarHistorico()]);
+    await recarregar();
   });
 
   $('#excluir-lancamento').addEventListener('click', async () => {
@@ -918,7 +1143,566 @@
     if (error) return aviso('Não foi possível excluir: ' + error.message, true);
     fecharDialogo('#dlg-lancamento');
     aviso('Lançamento excluído!');
-    await Promise.all([carregarLancamentos(), carregarHistorico()]);
+    await recarregar();
+  });
+  // ---------- contas fixas e parcelamentos ----------
+  let contasFixas = [];
+  let parcelamentos = [];
+  let parcelas = [];          // lançamentos dos parcelamentos, para o andamento de cada compra
+  let gerados = new Set();    // meses cujas contas fixas já viraram lançamentos
+  let listaFixas = 'contas';  // segmento aberto na aba Fixas
+
+  async function carregarFixas() {
+    const [rc, rp, rl] = await Promise.all([
+      supabase.from('contas_fixas').select('*').order('dia'),
+      supabase.from('parcelamentos').select('*').order('data_compra', { ascending: false }),
+      supabase.from('lancamentos').select('parcelamento_id, parcela, pago, valor').not('parcelamento_id', 'is', null),
+    ]);
+    const erro = [rc, rp, rl].find((r) => r.error);
+    if (erro) return aviso(erro.error.message, true);
+    contasFixas = rc.data;
+    parcelamentos = rp.data;
+    parcelas = rl.data;
+    desenharFixas();
+  }
+
+  async function carregarGerados() {
+    if (modoLeitura) return;
+    const { data, error } = await supabase.from('meses_gerados').select('mes');
+    if (error) return aviso(error.message, true);
+    gerados = new Set(data.map((g) => g.mes));
+  }
+
+  const contaAtivaNoMes = (c, mes) => c.inicio <= mes && (!c.fim || c.fim >= mes);
+  const lancamentoDaConta = (c, mes) => ({
+    tipo: c.tipo, data: diaNoMes(mes, c.dia), mes, descricao: c.descricao, valor: c.valor_previsto, grupo: c.grupo,
+    categoria_id: c.categoria_id, meio_pagamento_id: c.meio_pagamento_id, pago: false, conta_fixa_id: c.id,
+  });
+  // Parcela no cartão vence no dia de vencimento da fatura; nos outros meios, no mesmo dia da compra
+  function dataDaParcela(mes, meio, dataCompra) {
+    const dia = meio?.tipo === 'cartao' && meio.dia_vencimento ? meio.dia_vencimento : Number(dataCompra.slice(8));
+    return diaNoMes(mes, dia);
+  }
+
+  // Cria como pendentes os lançamentos das contas fixas de um mês, uma vez só por mês
+  // (um lançamento apagado de propósito não volta). Meses passados não são gerados: são histórico
+  async function gerarMes(mes) {
+    if (modoLeitura || gerados.has(mes) || mes < inicioMes(hoje())) return;
+    const novos = contasFixas.filter((c) => contaAtivaNoMes(c, mes)).map((c) => lancamentoDaConta(c, mes));
+    if (novos.length) {
+      const { error } = await supabase.from('lancamentos')
+        .upsert(novos, { onConflict: 'conta_fixa_id,mes', ignoreDuplicates: true });
+      if (error) return aviso('Não foi possível criar as contas fixas do mês: ' + error.message, true);
+    }
+    const { error } = await supabase.from('meses_gerados').upsert({ mes }, { onConflict: 'user_id,mes', ignoreDuplicates: true });
+    if (error) return aviso(error.message, true);
+    gerados.add(mes);
+  }
+
+  // Conta fixa nova ou alterada: cria o lançamento dela nos meses já gerados que ainda não têm
+  async function gerarContaNosMeses(conta) {
+    const meses = [...gerados].filter((m) => contaAtivaNoMes(conta, m));
+    if (!meses.length) return null;
+    const { error } = await supabase.from('lancamentos')
+      .upsert(meses.map((m) => lancamentoDaConta(conta, m)), { onConflict: 'conta_fixa_id,mes', ignoreDuplicates: true });
+    return error;
+  }
+
+  // Mudanças na conta fixa valem para os lançamentos dela ainda não pagos, deste mês em diante
+  async function aplicarContaNosPendentes(conta) {
+    const { data, error } = await supabase.from('lancamentos').select('id, mes')
+      .eq('conta_fixa_id', conta.id).eq('pago', false).gte('mes', inicioMes(hoje()));
+    if (error) return error;
+    const fora = data.filter((l) => !contaAtivaNoMes(conta, l.mes)).map((l) => l.id);
+    if (fora.length) {
+      const r = await supabase.from('lancamentos').delete().in('id', fora);
+      if (r.error) return r.error;
+    }
+    for (const l of data.filter((x) => contaAtivaNoMes(conta, x.mes))) {
+      const { conta_fixa_id, mes, pago, ...campos } = lancamentoDaConta(conta, l.mes);
+      const r = await supabase.from('lancamentos').update(campos).eq('id', l.id);
+      if (r.error) return r.error;
+    }
+    return null;
+  }
+
+  // Parcelas que vieram de antes do app (começou da parcela 4, por exemplo) contam como pagas
+  function andamento(p) {
+    const minhas = parcelas.filter((l) => l.parcelamento_id === p.id);
+    const pagas = p.total_parcelas - minhas.length + minhas.filter((l) => l.pago).length;
+    const faltam = minhas.filter((l) => !l.pago).reduce((s, l) => s + centavos(l.valor), 0);
+    return { pagas, faltam, ultimoMes: somarMeses(p.primeiro_mes, p.total_parcelas - 1) };
+  }
+  const totalParcelas = (id) => parcelamentos.find((p) => p.id === id)?.total_parcelas ?? '?';
+
+  function desenharFixas() {
+    $('#lista-contas-fixas').hidden = listaFixas !== 'contas';
+    $('#lista-parcelamentos').hidden = listaFixas !== 'parcelamentos';
+    $$('#segmento-fixas [data-lista]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.lista === listaFixas)));
+    desenharContasFixas();
+    desenharParcelamentos();
+    atualizarFab();
+  }
+
+  function secaoFixas(titulo, itens, desenharItem, resumo = '', classe = '') {
+    if (!itens.length) return '';
+    return `<section class="${classe}">
+      <h2 class="grupo-titulo sobretitulo"><span>${titulo}</span>${resumo ? `<span>${resumo}</span>` : ''}</h2>
+      <ul class="lancs cartao">${itens.map(desenharItem).join('')}</ul>
+    </section>`;
+  }
+  const linhaFixa = (id, info, valor) => (modoLeitura
+    ? `<li><div class="lanc">${info}${valor}</div></li>`
+    : `<li><button class="lanc" type="button" data-id="${id}">${info}${valor}</button></li>`);
+
+  function desenharContasFixas() {
+    const atual = inicioMes(hoje());
+    const ativas = contasFixas.filter((c) => !c.fim || c.fim >= atual);
+    const encerradas = contasFixas.filter((c) => c.fim && c.fim < atual);
+    const despesas = ativas.filter((c) => c.tipo === 'despesa');
+    const receitas = ativas.filter((c) => c.tipo === 'receita');
+    const soma = (lista) => `${fmtReais(lista.reduce((s, c) => s + centavos(c.valor_previsto), 0))} por mês`;
+    const html = secaoFixas('Despesas', despesas, itemContaFixa, soma(despesas))
+      + secaoFixas('Receitas', receitas, itemContaFixa, soma(receitas))
+      + secaoFixas('Encerradas', encerradas, itemContaFixa, '', 'encerradas');
+    $('#lista-contas-fixas').innerHTML = html || `<div class="cartao vazio">Nenhuma conta fixa ainda.${modoLeitura ? ''
+      : ' Toque em “Nova conta fixa” para cadastrar a primeira (Netflix, luz, condomínio, salário…).'}</div>`;
+  }
+
+  function itemContaFixa(c) {
+    const atual = inicioMes(hoje());
+    const detalhes = [`dia ${c.dia}`, nomeMeio(c.meio_pagamento_id), nomeCategoria(c.categoria_id),
+      c.inicio > atual ? `a partir de ${fmtMes(c.inicio).toLowerCase()}` : '',
+      c.fim ? `até ${fmtMes(c.fim).toLowerCase()}` : ''].filter(Boolean).map(esc).join(' · ');
+    const receita = c.tipo === 'receita';
+    return linhaFixa(c.id,
+      `<span class="info"><strong>${esc(c.descricao)}</strong><small>${detalhes}</small></span>`,
+      `<span class="valor${receita ? ' positivo' : ''}">${receita ? '+ ' : ''}${fmtReais(centavos(c.valor_previsto))}</span>`);
+  }
+
+  function desenharParcelamentos() {
+    const lista = parcelamentos.map((p) => ({ p, a: andamento(p) }));
+    const andando = lista.filter((x) => x.a.faltam !== 0);
+    const concluidos = lista.filter((x) => x.a.faltam === 0);
+    const falta = andando.reduce((s, x) => s + x.a.faltam, 0);
+    const html = secaoFixas('Em andamento', andando, itemParcelamento, `faltam ${fmtReais(falta)}`)
+      + secaoFixas('Concluídos', concluidos, itemParcelamento, '', 'encerradas');
+    $('#lista-parcelamentos').innerHTML = html || `<div class="cartao vazio">Nenhum parcelamento ainda.${modoLeitura ? ''
+      : ' Toque em “Novo parcelamento” para cadastrar uma compra parcelada.'}</div>`;
+  }
+
+  function itemParcelamento({ p, a }) {
+    const detalhes = [nomeMeio(p.meio_pagamento_id), `${a.pagas} de ${p.total_parcelas} pagas`,
+      a.faltam ? `faltam ${fmtReais(a.faltam)}` : `terminou em ${fmtMes(a.ultimoMes).toLowerCase()}`]
+      .filter(Boolean).map(esc).join(' · ');
+    const ate = `${MESES[dataDeIso(a.ultimoMes).getMonth()]}/${a.ultimoMes.slice(2, 4)}`;
+    return linhaFixa(p.id,
+      `<span class="info"><strong>${esc(p.descricao)}</strong><small>${detalhes}</small></span>`,
+      `<span class="valor">${fmtReais(centavos(p.valor_parcela))}<small>${p.total_parcelas}× · até ${ate}</small></span>`);
+  }
+
+  $('#segmento-fixas').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-lista]');
+    if (!b) return;
+    listaFixas = b.dataset.lista;
+    desenharFixas();
+  });
+  $('#lista-contas-fixas').addEventListener('click', (e) => {
+    const b = e.target.closest('.lanc[data-id]');
+    if (b) abrirContaFixa(contasFixas.find((c) => c.id === Number(b.dataset.id)));
+  });
+  $('#lista-parcelamentos').addEventListener('click', (e) => {
+    const b = e.target.closest('.lanc[data-id]');
+    if (b) abrirParcelamento(parcelamentos.find((p) => p.id === Number(b.dataset.id)));
+  });
+
+  // ---------- formulário de conta fixa ----------
+  let editandoConta = null;
+  let tipoConta = 'despesa';
+  let grupoConta = null;
+  let meioConta = null;
+
+  function marcarTipoConta(tipo) {
+    tipoConta = tipo;
+    marcarSegmento('#cf-tipo', 'tipo', tipo);
+    $$('#form-conta-fixa .so-despesa').forEach((el) => { el.hidden = tipo !== 'despesa'; });
+    opcoesCategoria('#cf-categoria', tipo, $('#cf-categoria').value);
+  }
+
+  function abrirContaFixa(c = null) {
+    if (modoLeitura) return;
+    editandoConta = c;
+    const inicio = c?.inicio ?? inicioMes(hoje());
+    $('#titulo-conta-fixa').textContent = c ? 'Editar conta fixa' : 'Nova conta fixa';
+    $('#excluir-conta-fixa').hidden = !c;
+    $('#cf-dica-edicao').hidden = !c;
+    $('#cf-valor').value = c ? valorCampo(centavos(c.valor_previsto)) : '';
+    $('#cf-descricao').value = c?.descricao ?? '';
+    $('#cf-dia').value = c?.dia ?? Number(hoje().slice(8));
+    marcarTipoConta(c?.tipo ?? 'despesa');
+    grupoConta = c?.grupo ?? null;
+    marcarSegmento('#cf-grupos', 'grupo', grupoConta);
+    opcoesCategoria('#cf-categoria', tipoConta, c?.categoria_id ?? '');
+    meioConta = c?.meio_pagamento_id ?? null;
+    desenharChipsMeio('#cf-meios', meioConta);
+    opcoesMeses('#cf-inicio', mesesParaEscolha(inicio), inicio);
+    opcoesMeses('#cf-fim', mesesParaEscolha(c?.fim), c?.fim ?? '', 'Sem data para terminar');
+    abrirDialogo('#dlg-conta-fixa');
+    if (!c) $('#cf-valor').focus();
+  }
+
+  $('#cf-tipo').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-tipo]');
+    if (b) marcarTipoConta(b.dataset.tipo);
+  });
+  $('#cf-grupos').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-grupo]');
+    if (!b) return;
+    grupoConta = b.dataset.grupo;
+    marcarSegmento('#cf-grupos', 'grupo', grupoConta);
+  });
+  $('#cf-meios').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-id]');
+    if (!b) return;
+    meioConta = Number(b.dataset.id);
+    marcarChips('#cf-meios', meioConta);
+  });
+  $('#cf-categoria').addEventListener('change', () => {
+    const cat = categorias.find((c) => String(c.id) === $('#cf-categoria').value);
+    if (cat?.grupo_padrao && !grupoConta) {
+      grupoConta = cat.grupo_padrao;
+      marcarSegmento('#cf-grupos', 'grupo', grupoConta);
+    }
+  });
+
+  $('#form-conta-fixa').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const c = lerReais($('#cf-valor').value);
+    const descricao = $('#cf-descricao').value.trim();
+    const dia = Number($('#cf-dia').value);
+    const inicio = $('#cf-inicio').value;
+    const fim = $('#cf-fim').value || null;
+    const despesa = tipoConta === 'despesa';
+    if (!c) return aviso('Informe um valor maior que zero, como 59,90.', true);
+    if (!descricao) return aviso('Informe a descrição.', true);
+    if (!Number.isInteger(dia) || dia < 1 || dia > 31) return aviso('O dia do mês vai de 1 a 31.', true);
+    if (!meioConta) return aviso('Escolha o meio de pagamento.', true);
+    if (despesa && !grupoConta) return aviso('Escolha o grupo: Essencial, Diversão ou Investimento.', true);
+    if (fim && fim < inicio) return aviso('O último mês não pode ser antes do primeiro.', true);
+
+    const registro = {
+      tipo: tipoConta, descricao, valor_previsto: paraBanco(c), dia, meio_pagamento_id: meioConta,
+      categoria_id: Number($('#cf-categoria').value) || null, grupo: despesa ? grupoConta : null, inicio, fim,
+    };
+    const botao = $('#salvar-conta-fixa');
+    botao.disabled = true;
+    let conta;
+    let error;
+    if (editandoConta) {
+      ({ error } = await supabase.from('contas_fixas').update(registro).eq('id', editandoConta.id));
+      conta = { ...editandoConta, ...registro };
+      if (!error) error = await aplicarContaNosPendentes(conta);
+    } else {
+      ({ data: conta, error } = await supabase.from('contas_fixas').insert(registro).select().single());
+    }
+    if (!error) error = await gerarContaNosMeses(conta);
+    botao.disabled = false;
+    if (error) return aviso('Não foi possível salvar: ' + error.message, true);
+    fecharDialogo('#dlg-conta-fixa');
+    aviso('Conta fixa salva!');
+    await recarregar();
+  });
+
+  $('#excluir-conta-fixa').addEventListener('click', async () => {
+    const c = editandoConta;
+    if (!c || !confirm(`Excluir a conta fixa "${c.descricao}"? Os lançamentos já pagos continuam no histórico. `
+      + 'Para só parar de lançar, use “Último mês”.')) return;
+    let r = await supabase.from('lancamentos').delete()
+      .eq('conta_fixa_id', c.id).eq('pago', false).gte('mes', inicioMes(hoje()));
+    if (!r.error) r = await supabase.from('contas_fixas').delete().eq('id', c.id);
+    if (r.error) return aviso('Não foi possível excluir: ' + r.error.message, true);
+    fecharDialogo('#dlg-conta-fixa');
+    aviso('Conta fixa excluída!');
+    await recarregar();
+  });
+
+  // ---------- formulário de parcelamento ----------
+  let editandoParc = null;
+  let grupoParc = null;
+  let meioParc = null;
+  let mesParcTocado = false;   // o mês da parcela foi escolhido à mão
+
+  // Mês da primeira parcela lançada: o da fatura da compra, quando começa da parcela 1
+  function atualizarMesParc() {
+    if (editandoParc) return resumoParc();
+    const primeira = Number($('#pa-primeira').value) || 1;
+    const sugerido = primeira === 1
+      ? mesDoPagamento($('#pa-data').value || hoje(), meios.find((m) => m.id === meioParc))
+      : inicioMes(hoje());
+    const atual = mesParcTocado && $('#pa-mes').value ? $('#pa-mes').value : sugerido;
+    opcoesMeses('#pa-mes', mesesParaEscolha(atual, sugerido), atual);
+    resumoParc();
+  }
+
+  function resumoParc() {
+    const c = lerReais($('#pa-valor').value);
+    const total = Number($('#pa-total').value);
+    const primeira = Number($('#pa-primeira').value) || 1;
+    if (!c || !Number.isInteger(total) || total < 2) { $('#pa-resumo').textContent = ''; return; }
+    const conta = `${total} × ${fmtReais(c)} = ${fmtReais(c * total)}.`;
+    if (editandoParc) {
+      const ultimo = somarMeses(editandoParc.primeiro_mes, total - 1);
+      $('#pa-resumo').textContent = `${conta} De ${fmtMes(editandoParc.primeiro_mes).toLowerCase()} a ${fmtMes(ultimo).toLowerCase()}.`;
+      return;
+    }
+    const mes = $('#pa-mes').value;
+    if (primeira > total || !mes) { $('#pa-resumo').textContent = conta; return; }
+    const n = total - primeira + 1;
+    $('#pa-resumo').textContent = `${conta} ${n === 1 ? 'Será lançada 1 parcela' : `Serão lançadas ${n} parcelas`}, `
+      + `de ${fmtMes(mes).toLowerCase()} a ${fmtMes(somarMeses(mes, n - 1)).toLowerCase()}.`;
+  }
+
+  function abrirParcelamento(p = null) {
+    if (modoLeitura) return;
+    editandoParc = p;
+    mesParcTocado = false;
+    $('#titulo-parcelamento').textContent = p ? 'Editar parcelamento' : 'Novo parcelamento';
+    $('#excluir-parcelamento').hidden = !p;
+    $('#pa-dica-edicao').hidden = !p;
+    $('#pa-inicio').hidden = Boolean(p);
+    $('#pa-valor').value = p ? valorCampo(centavos(p.valor_parcela)) : '';
+    $('#pa-descricao').value = p?.descricao ?? '';
+    $('#pa-total').value = p?.total_parcelas ?? '';
+    $('#pa-data').value = p?.data_compra ?? hoje();
+    $('#pa-primeira').value = 1;
+    $('#pa-total').disabled = Boolean(p);
+    $('#pa-data').disabled = Boolean(p);
+    grupoParc = p?.grupo ?? null;
+    marcarSegmento('#pa-grupos', 'grupo', grupoParc);
+    opcoesCategoria('#pa-categoria', 'despesa', p?.categoria_id ?? '');
+    meioParc = p?.meio_pagamento_id ?? null;
+    desenharChipsMeio('#pa-meios', meioParc);
+    atualizarMesParc();
+    abrirDialogo('#dlg-parcelamento');
+    if (!p) $('#pa-valor').focus();
+  }
+
+  $('#pa-grupos').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-grupo]');
+    if (!b) return;
+    grupoParc = b.dataset.grupo;
+    marcarSegmento('#pa-grupos', 'grupo', grupoParc);
+  });
+  $('#pa-meios').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-id]');
+    if (!b) return;
+    meioParc = Number(b.dataset.id);
+    marcarChips('#pa-meios', meioParc);
+    atualizarMesParc();
+  });
+  $('#pa-categoria').addEventListener('change', () => {
+    const cat = categorias.find((c) => String(c.id) === $('#pa-categoria').value);
+    if (cat?.grupo_padrao && !grupoParc) {
+      grupoParc = cat.grupo_padrao;
+      marcarSegmento('#pa-grupos', 'grupo', grupoParc);
+    }
+  });
+  $('#pa-data').addEventListener('change', atualizarMesParc);
+  $('#pa-primeira').addEventListener('input', atualizarMesParc);
+  $('#pa-mes').addEventListener('change', () => { mesParcTocado = true; resumoParc(); });
+  $('#pa-valor').addEventListener('input', resumoParc);
+  $('#pa-total').addEventListener('input', resumoParc);
+
+  $('#form-parcelamento').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const c = lerReais($('#pa-valor').value);
+    const descricao = $('#pa-descricao').value.trim();
+    const total = Number($('#pa-total').value);
+    const primeira = Number($('#pa-primeira').value) || 1;
+    const dataCompra = $('#pa-data').value;
+    if (!c) return aviso('Informe o valor da parcela, como 270,92.', true);
+    if (!descricao) return aviso('Informe a descrição.', true);
+    if (!Number.isInteger(total) || total < 2 || total > 120) return aviso('O número de parcelas vai de 2 a 120.', true);
+    if (!dataCompra) return aviso('Informe a data da compra.', true);
+    if (!meioParc) return aviso('Escolha o meio de pagamento.', true);
+    if (!grupoParc) return aviso('Escolha o grupo: Essencial, Diversão ou Investimento.', true);
+    if (!editandoParc && (!Number.isInteger(primeira) || primeira < 1 || primeira > total)) {
+      return aviso(`A primeira parcela a lançar vai de 1 a ${total}.`, true);
+    }
+
+    const campos = {
+      descricao, valor_parcela: paraBanco(c), meio_pagamento_id: meioParc,
+      categoria_id: Number($('#pa-categoria').value) || null, grupo: grupoParc,
+    };
+    const botao = $('#salvar-parcelamento');
+    botao.disabled = true;
+    let error;
+    if (editandoParc) {
+      ({ error } = await supabase.from('parcelamentos').update(campos).eq('id', editandoParc.id));
+      if (!error) {
+        const { valor_parcela, ...resto } = campos;
+        ({ error } = await supabase.from('lancamentos').update({ ...resto, valor: valor_parcela })
+          .eq('parcelamento_id', editandoParc.id).eq('pago', false));
+      }
+    } else {
+      const registro = {
+        ...campos, total_parcelas: total, data_compra: dataCompra,
+        primeiro_mes: somarMeses($('#pa-mes').value, -(primeira - 1)),
+      };
+      const r = await supabase.from('parcelamentos').insert(registro).select().single();
+      error = r.error;
+      if (!error) {
+        const meio = meios.find((m) => m.id === meioParc);
+        const novos = [];
+        for (let n = primeira; n <= total; n++) {
+          const mes = somarMeses(registro.primeiro_mes, n - 1);
+          novos.push({
+            tipo: 'despesa', data: dataDaParcela(mes, meio, dataCompra), mes, descricao, valor: registro.valor_parcela,
+            grupo: grupoParc, categoria_id: registro.categoria_id, meio_pagamento_id: meioParc, pago: false,
+            parcelamento_id: r.data.id, parcela: n,
+          });
+        }
+        ({ error } = await supabase.from('lancamentos').insert(novos));
+        // Sem as parcelas o parcelamento não serve: desfaz
+        if (error) await supabase.from('parcelamentos').delete().eq('id', r.data.id);
+      }
+    }
+    botao.disabled = false;
+    if (error) return aviso('Não foi possível salvar: ' + error.message, true);
+    fecharDialogo('#dlg-parcelamento');
+    aviso('Parcelamento salvo!');
+    await recarregar();
+  });
+
+  $('#excluir-parcelamento').addEventListener('click', async () => {
+    const p = editandoParc;
+    const n = parcelas.filter((l) => l.parcelamento_id === p?.id).length;
+    if (!p || !confirm(`Excluir a compra "${p.descricao}" e as ${n} parcelas lançadas, inclusive as já pagas?`)) return;
+    const { error } = await supabase.from('parcelamentos').delete().eq('id', p.id);
+    if (error) return aviso('Não foi possível excluir: ' + error.message, true);
+    fecharDialogo('#dlg-parcelamento');
+    aviso('Parcelamento excluído!');
+    await recarregar();
+  });
+
+  // ---------- botão flutuante ----------
+  // "Lançar" em todas as abas; na aba Fixas cria conta fixa ou parcelamento, conforme o segmento
+  function atualizarFab() {
+    const fixas = !$('#aba-fixas').hidden;
+    $('#rotulo-fab').textContent = !fixas ? 'Lançar' : listaFixas === 'contas' ? 'Nova conta fixa' : 'Novo parcelamento';
+  }
+  $('#novo-lancamento').addEventListener('click', () => {
+    if ($('#aba-fixas').hidden) return abrirLancamento();
+    if (listaFixas === 'contas') abrirContaFixa(); else abrirParcelamento();
+  });
+
+  async function recarregar() {
+    await Promise.all([carregarLancamentos(), carregarHistorico(), carregarFixas()]);
+  }
+
+  // ---------- resumo do mês ----------
+  function desenharResumoMes() {
+    let entradas = 0;
+    let saidas = 0;
+    let faltaPagar = 0;
+    lancamentos.forEach((l) => {
+      const c = centavos(l.valor);
+      if (l.tipo === 'receita') entradas += c;
+      else { saidas += c; if (!l.pago) faltaPagar += c; }
+    });
+    const sobra = entradas - saidas;
+    $('#resumo-mes').innerHTML = `
+      <div class="stat"><span>Entradas</span><b class="positivo">${fmtReais(entradas)}</b></div>
+      <div class="stat"><span>Saídas</span><b>${fmtReais(saidas)}</b></div>
+      <div class="stat"><span>Sobra</span><b class="${sobra < 0 ? 'negativo' : 'positivo'}">${fmtReais(sobra)}</b></div>
+      <div class="stat"><span>Falta pagar</span><b class="${faltaPagar > 0 ? 'a-pagar' : ''}">${fmtReais(faltaPagar)}</b></div>`;
+    desenharPendentes(faltaPagar);
+    desenharMeiosDoMes();
+  }
+
+  // Pendentes por vencimento. Compras no cartão viram uma linha por fatura
+  function desenharPendentes(faltaPagar) {
+    const itens = [];
+    const faturas = new Map();
+    lancamentos.filter((l) => !l.pago).forEach((l) => {
+      const meio = meios.find((m) => m.id === l.meio_pagamento_id);
+      if (l.tipo === 'despesa' && meio?.tipo === 'cartao') {
+        if (!faturas.has(meio.id)) {
+          const vence = meio.dia_vencimento ? diaNoMes(mesAtual, meio.dia_vencimento) : l.data;
+          faturas.set(meio.id, { meio, ids: [], total: 0, data: vence });
+        }
+        const f = faturas.get(meio.id);
+        f.ids.push(l.id);
+        f.total += centavos(l.valor);
+        if (!meio.dia_vencimento && l.data > f.data) f.data = l.data;
+      } else {
+        itens.push({ l, ids: [l.id], total: centavos(l.valor), data: l.data });
+      }
+    });
+    const todos = [...itens, ...faturas.values()].sort((a, b) => a.data.localeCompare(b.data));
+    $('#total-pendentes').textContent = faltaPagar > 0 ? `${fmtReais(faltaPagar)} a pagar` : '';
+    $('#lista-pendentes').innerHTML = todos.length
+      ? `<ul class="pendentes cartao">${todos.map(itemPendente).join('')}</ul>`
+      : `<div class="cartao vazio">Nada pendente em ${nomeMes(mesAtual).toLowerCase()}.</div>`;
+  }
+
+  function itemPendente(p) {
+    const receita = p.l?.tipo === 'receita';
+    const nome = p.l ? p.l.descricao : `Fatura ${p.meio.nome}`;
+    const parcela = p.l?.parcela ? ` <span class="parcela">${p.l.parcela}/${totalParcelas(p.l.parcelamento_id)}</span>` : '';
+    const hojeIso = hoje();
+    const quando = p.data < hojeIso ? '<span class="selo-pagar atrasada">atrasada</span>'
+      : p.data === hojeIso ? `<span class="selo-pagar">${receita ? 'prevista para hoje' : 'vence hoje'}</span>`
+      : `${receita ? 'prevista para' : 'vence'} ${esc(fmtDia(p.data))}`;
+    const detalhes = p.l
+      ? esc(nomeMeio(p.l.meio_pagamento_id) ?? '')
+      : `${p.ids.length} ${p.ids.length === 1 ? 'lançamento' : 'lançamentos'}`;
+    const info = `<strong>${esc(nome)}${parcela}</strong><small>${detalhes ? `${detalhes} · ` : ''}${quando}</small>`;
+    const valor = `<span class="valor${receita ? ' positivo' : ''}">${receita ? '+ ' : ''}${fmtReais(p.total)}</span>`;
+    if (modoLeitura) return `<li class="pend"><div class="pend-info">${info}</div>${valor}</li>`;
+    const alvo = p.l ? `data-id="${p.l.id}"` : `data-meio="${p.meio.id}"`;
+    return `<li class="pend">
+      <button class="marcar" type="button" data-ids="${p.ids.join(',')}" data-receita="${receita}"
+        aria-label="Marcar ${esc(nome)} como ${receita ? 'recebida' : 'paga'}"><span class="bola">${ICONE.checkP}</span></button>
+      <button class="pend-info" type="button" ${alvo}>${info}</button>${valor}
+    </li>`;
+  }
+
+  function desenharMeiosDoMes() {
+    const porMeio = new Map();
+    lancamentos.filter((l) => l.tipo === 'despesa').forEach((l) => {
+      const t = porMeio.get(l.meio_pagamento_id) ?? { total: 0, falta: 0 };
+      t.total += centavos(l.valor);
+      if (!l.pago) t.falta += centavos(l.valor);
+      porMeio.set(l.meio_pagamento_id, t);
+    });
+    const linhas = [...porMeio].sort((a, b) => b[1].total - a[1].total).map(([id, t]) => `<li>
+      <span>${esc(nomeMeio(id) ?? 'Sem meio de pagamento')}</span>
+      <span class="num-fonte">${fmtReais(t.total)}${t.falta ? `<small>falta ${fmtReais(t.falta)}</small>` : ''}</span>
+    </li>`);
+    $('#lista-meios').innerHTML = linhas.length
+      ? `<ul class="lista-meios cartao">${linhas.join('')}</ul>`
+      : '<div class="cartao vazio">Nenhum gasto neste mês.</div>';
+  }
+
+  $('#lista-pendentes').addEventListener('click', async (e) => {
+    const marcar = e.target.closest('.marcar');
+    if (marcar) {
+      const ids = marcar.dataset.ids.split(',').map(Number);
+      marcar.disabled = true;
+      const { error } = await supabase.from('lancamentos').update({ pago: true }).in('id', ids);
+      if (error) { marcar.disabled = false; return aviso('Não foi possível marcar: ' + error.message, true); }
+      aviso(marcar.dataset.receita === 'true' ? 'Recebido!' : ids.length > 1 ? 'Fatura paga!' : 'Pago!');
+      return recarregar();
+    }
+    const info = e.target.closest('.pend-info');
+    if (info?.dataset.id) abrirLancamento(lancamentos.find((l) => l.id === Number(info.dataset.id)));
+    // Fatura: mostra os lançamentos pendentes daquele cartão
+    if (info?.dataset.meio) {
+      abrirAba('lancamentos');
+      $('#busca-lancamento').value = nomeMeio(Number(info.dataset.meio));
+      escolherFiltro('pendente');
+    }
   });
 </script>
 </body>

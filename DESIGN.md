@@ -113,7 +113,7 @@ Não crie alvos de toque menores que 44px.
 | --- | --- | --- |
 | Navegação | `.tabbar` fixa embaixo, 72px + safe area, 4 abas (*Mês*, *Lançamentos*, *Fixas*, *Evolução*) | Barra lateral de 248px com marca e as 4 abas |
 | Conteúdo | Coluna de até 640px, centralizada | Até 1120px, alinhado à esquerda |
-| Mês | Seletor de mês e avatar no topo | Igual; resumo e *A pagar* lado a lado (próximas etapas) |
+| Mês | Seletor e avatar no topo, 4 estatísticas em 2×2, *Pendentes* e depois *Gastos por meio* | 4 estatísticas numa linha; *Pendentes* e *Gastos por meio* lado a lado (`.mes-layout`) |
 | Lançar | FAB acima da barra inferior | FAB no canto inferior direito |
 | Sheets | Sobem de baixo, com alça | Modal centralizado, sem alça |
 
@@ -139,14 +139,21 @@ Reutilize estes componentes antes de criar um novo. Os marcados com *(gym)* aind
 | `.selo-leitura` | Pílula "Somente leitura" no menu da conta | Aparece só em `modoLeitura` |
 | `.so-dono` | Marca toda ação que altera dados | Fica `hidden` em `modoLeitura`. Não é um estilo, é uma regra |
 | `#aviso` | Toast (verde para sucesso, `.erro` para vermelho) | Chamado via `aviso()` no JS; some em 3,5s |
-| `.fab` | Botão flutuante "Lançar" (claro sobre escuro) | Canto inferior direito, em todas as abas; `.so-dono` |
+| `.fab` | Botão flutuante (claro sobre escuro) | "Lançar"; na aba Fixas vira "Nova conta fixa" ou "Novo parcelamento" (`#rotulo-fab`); `.so-dono` |
 | `.segmento` / `.segmento.tres` | Controle segmentado de 2 ou 3 opções | `aria-pressed`. Ex.: Despesa / Receita; grupo 50/30/20. Dentro de sheet fica sobre `--superficie-2` |
 | `.chip` / `.chips.rolavel` | Filtro ou escolha única | `aria-pressed`. `.rolavel` rola na horizontal no celular (filtros da aba Lançamentos) |
 | `.busca` | Input com ícone de lupa | `type="search"` + `aria-label` |
 | `.resumo` / `.stat` | Estatísticas (rótulo + valor grande) | 2 colunas no celular (a última ocupa a linha), 3 no desktop |
 | `.positivo` / `.negativo` | Cor do valor | Verde para receita, reembolso e saldo positivo; vermelho para saldo negativo |
 | `.dia` / `.lancs` / `.lanc` | Lista do mês agrupada por dia: descrição, categoria · meio e valor à direita | `button.lanc` abre a edição; no modo leitura vira `div` |
-| `.selo-pagar` | Pílula laranja "a pagar" | Lançamento com `pago = false` |
+| `.selo-pagar` / `.atrasada` | Pílula laranja "a pagar" / "vence hoje"; vermelha com `.atrasada` | Lançamento com `pago = false`; vermelho quando a data já passou |
+| `.resumo.quatro` | Resumo do mês com 4 estatísticas | 2×2 no celular, 4 numa linha no desktop. "Falta pagar" em laranja (`.a-pagar`) |
+| `.pendentes` / `.pend` / `.marcar` | Lista de pendentes: círculo de marcar, nome e vencimento, valor | `.marcar` tem 44px, círculo de 26px; o check verde aparece no hover/foco. `aria-label` "Marcar X como paga" |
+| `.lista-meios` | Total do mês por meio de pagamento | "falta R$ x" em laranja embaixo do total |
+| `.grupo-titulo` | Sobretítulo de seção com um total à direita | Ex.: "Pendentes · R$ 1.490,06 a pagar", "Despesas · R$ 59,90 por mês" |
+| `.encerradas` | Seção de itens que não valem mais (contas encerradas, parcelamentos concluídos) | Linhas com 60% de opacidade |
+| `.parcela` | Número da parcela ao lado da descrição | "GoPro 3/10", em `--suave` |
+| `.dica` | Texto de ajuda dentro de sheets | 14px, `--suave` |
 | `.valor-caixa` | Campo de valor com "R$" fixo à esquerda | Fonte condensada 34px, `inputmode="decimal"` |
 | `.alternar` | Linha com texto e checkbox à direita | 52px; `small` para explicação |
 | `.botao.perigo` | Botão comum vermelho | Ex.: "Excluir" ao lado de "Salvar lançamento" |
