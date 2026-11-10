@@ -232,6 +232,23 @@
   /* fixas */
   .encerradas .lanc { opacity: .6; }
 
+  /* ---------- evolução e barras ---------- */
+  #aba-evolucao { padding-bottom: 80px; }
+  .barras-cat { list-style: none; margin: 0; padding: 6px 16px; }
+  .barras-cat li { padding: 10px 0; }
+  .barras-cat li + li { border-top: 1px solid var(--borda-suave); }
+  .linha-cat { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+  .linha-cat .num-fonte { font-size: 18px; font-weight: 700; white-space: nowrap; }
+  .barras-cat small { font-family: var(--fonte); font-size: 12px; font-weight: 600; color: var(--suave); }
+  .barras-cat li > small { display: block; margin-top: 6px; }
+  .trilho { position: relative; height: 6px; border-radius: 3px; background: var(--borda); margin-top: 8px; }
+  .trilho span { display: block; height: 100%; border-radius: 3px; background: var(--texto-2); }
+  .trilho .dentro { background: var(--ok); } .trilho .acima { background: var(--desce); } .trilho .abaixo { background: var(--suave); }
+  .trilho i { position: absolute; top: -3px; width: 2px; height: 12px; margin-left: -1px; border-radius: 1px; background: var(--texto); }
+  .grafico-cartao { padding: 16px; }
+  .grafico-cartao .dica { padding: 10px 0 0; }
+  .grafico-box { position: relative; height: 260px; margin-top: 8px; }
+
   #aviso { position: fixed; left: 50%; bottom: calc(var(--altura-nav) + var(--seguro-baixo) + 88px); z-index: 40;
            transform: translate(-50%, 30px); opacity: 0; pointer-events: none;
            background: var(--ok); color: var(--bg); font-weight: 600; padding: 12px 18px; border-radius: 12px;
@@ -265,6 +282,10 @@
     .resumo.quatro { max-width: none; grid-template-columns: repeat(4, minmax(0, 1fr)); }
     .mes-layout { display: grid; grid-template-columns: minmax(0, 3fr) minmax(280px, 2fr); gap: 24px; align-items: start; }
     .lista-fixas { max-width: 760px; }
+    .evo-layout { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 24px; align-items: start; }
+    .evo-larga { grid-column: 1 / -1; }
+    .evo-larga .grafico-box { height: 340px; }
+    .evo-periodo { max-width: 480px; }
     .fab { position: fixed; bottom: 32px; right: 40px; }
     dialog.sheet { margin: auto; border-radius: 24px; border: 1px solid var(--borda); max-height: calc(100vh - 80px); }
     .sheet-alca { display: none; }
@@ -345,6 +366,8 @@
             <div id="lista-pendentes"></div>
           </section>
           <section>
+            <h2 class="grupo-titulo sobretitulo"><span>Regra 50/30/20</span></h2>
+            <div id="lista-metas"></div>
             <h2 class="grupo-titulo sobretitulo"><span>Gastos por meio de pagamento</span></h2>
             <div id="lista-meios"></div>
           </section>
@@ -395,8 +418,43 @@
 
       <!-- Evolução -->
       <section id="aba-evolucao" class="aba" hidden>
-        <header class="pagina-topo"><h1>Evolução</h1></header>
-        <div class="cartao vazio">Os gráficos dos últimos 12 meses aparecem aqui em breve.</div>
+        <header class="pagina-topo">
+          <h1>Evolução</h1>
+          <div id="evo-atalhos" class="chips rolavel" role="group" aria-label="Período">
+            <button class="chip" type="button" data-periodo="6" aria-pressed="false">6 meses</button>
+            <button class="chip" type="button" data-periodo="12" aria-pressed="true">12 meses</button>
+            <button class="chip" type="button" data-periodo="ano" aria-pressed="false">Este ano</button>
+            <button class="chip" type="button" data-periodo="tudo" aria-pressed="false">Tudo</button>
+          </div>
+          <div class="linha evo-periodo">
+            <div><label for="evo-de">De</label><select id="evo-de"></select></div>
+            <div><label for="evo-ate">Até</label><select id="evo-ate"></select></div>
+          </div>
+        </header>
+        <div id="evo-vazio" class="cartao vazio" hidden>Nenhum lançamento nesse período.</div>
+        <div id="evo-conteudo">
+          <div id="evo-resumo" class="resumo quatro"></div>
+          <div class="evo-layout">
+            <section class="evo-larga">
+              <h2 class="grupo-titulo sobretitulo"><span>Gasto e receita por mês</span></h2>
+              <div class="cartao grafico-cartao">
+                <div class="grafico-box"><canvas id="grafico-meses" role="img" aria-label="Gasto por mês, dividido em Essencial, Diversão e Investimento, com a linha da receita"></canvas></div>
+              </div>
+            </section>
+            <section>
+              <h2 class="grupo-titulo sobretitulo"><span>Gasto por categoria</span></h2>
+              <div id="evo-categorias"></div>
+            </section>
+            <section>
+              <h2 class="grupo-titulo sobretitulo"><span>Um item ao longo do tempo</span></h2>
+              <div class="cartao grafico-cartao">
+                <select id="evo-item" aria-label="Item"></select>
+                <p id="evo-item-resumo" class="dica"></p>
+                <div class="grafico-box"><canvas id="grafico-item" role="img" aria-label="Valor do item escolhido em cada mês"></canvas></div>
+              </div>
+            </section>
+          </div>
+        </div>
       </section>
     </div>
 
@@ -658,6 +716,14 @@
     return isoLocal(new Date(d.getFullYear(), d.getMonth(), Math.min(dia, ultimo)));
   }
 
+  // Regra 50/30/20: grupos de despesa, cor de cada um nos gráficos e meta em % da receita
+  const GRUPOS = [
+    { id: 'essencial', nome: 'Essencial', cor: '#5AB8E8' },
+    { id: 'diversao', nome: 'Diversão', cor: '#E8C35A' },
+    { id: 'investimento', nome: 'Investimento', cor: '#4CC38A' },
+  ];
+  const METAS = { essencial: 50, diversao: 30, investimento: 20 };
+
   // Dinheiro: o banco guarda numeric(12,2) ('59.90'); as contas no JS são em centavos inteiros
   const BRL = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
   const centavos = (valor) => Math.round(Number(valor) * 100);
@@ -804,6 +870,7 @@
     $$('.aba').forEach((s) => { s.hidden = s.id !== 'aba-' + nome; });
     window.scrollTo(0, 0);
     atualizarFab();
+    if (nome === 'evolucao') carregarEvolucao();
   }
 
   // ---------- mês ----------
@@ -1598,6 +1665,7 @@
 
   async function recarregar() {
     await Promise.all([carregarLancamentos(), carregarHistorico(), carregarFixas()]);
+    if (!$('#aba-evolucao').hidden) carregarEvolucao();
   }
 
   // ---------- resumo do mês ----------
@@ -1605,10 +1673,11 @@
     let entradas = 0;
     let saidas = 0;
     let faltaPagar = 0;
+    const porGrupo = { essencial: 0, diversao: 0, investimento: 0 };
     lancamentos.forEach((l) => {
       const c = centavos(l.valor);
       if (l.tipo === 'receita') entradas += c;
-      else { saidas += c; if (!l.pago) faltaPagar += c; }
+      else { saidas += c; porGrupo[l.grupo] += c; if (!l.pago) faltaPagar += c; }
     });
     const sobra = entradas - saidas;
     $('#resumo-mes').innerHTML = `
@@ -1617,6 +1686,7 @@
       <div class="stat"><span>Sobra</span><b class="${sobra < 0 ? 'negativo' : 'positivo'}">${fmtReais(sobra)}</b></div>
       <div class="stat"><span>Falta pagar</span><b class="${faltaPagar > 0 ? 'a-pagar' : ''}">${fmtReais(faltaPagar)}</b></div>`;
     desenharPendentes(faltaPagar);
+    desenharMetas(entradas, saidas, porGrupo);
     desenharMeiosDoMes();
   }
 
@@ -1703,6 +1773,236 @@
       $('#busca-lancamento').value = nomeMeio(Number(info.dataset.meio));
       escolherFiltro('pendente');
     }
+  });
+
+  // ---------- regra 50/30/20 ----------
+  function desenharMetas(entradas, saidas, porGrupo) {
+    // Sem receita no mês, a porcentagem é sobre o gasto
+    const base = entradas > 0 ? entradas : saidas;
+    const rotulo = entradas > 0 ? 'da receita' : 'do gasto';
+    if (base <= 0) {
+      $('#lista-metas').innerHTML = '<div class="cartao vazio">Nenhum gasto neste mês.</div>';
+      return;
+    }
+    $('#lista-metas').innerHTML = `<ul class="barras-cat cartao">${GRUPOS.map((g) => {
+      const valor = porGrupo[g.id];
+      const pct = Math.round((valor / base) * 100);
+      const meta = METAS[g.id];
+      // Essencial e Diversão têm teto; Investimento tem piso
+      const piso = g.id === 'investimento';
+      const classe = piso ? (pct >= meta ? 'dentro' : 'abaixo') : (pct <= meta ? 'dentro' : 'acima');
+      return `<li>
+        <div class="linha-cat"><span>${g.nome}</span><span class="num-fonte">${fmtReais(valor)}</span></div>
+        <div class="trilho"><span class="${classe}" style="width: ${Math.max(0, Math.min(pct, 100))}%"></span><i style="left: ${meta}%"></i></div>
+        <small>${pct}% ${rotulo} · meta ${piso ? 'de pelo menos' : 'de até'} ${meta}%</small>
+      </li>`;
+    }).join('')}</ul>`;
+  }
+
+  // ---------- evolução ----------
+  let evoDe = null;           // primeiro e último mês do período
+  let evoAte = null;
+  let evoAtalho = '12';       // atalho de período marcado (null = período escolhido à mão)
+  let evoPrimeiroMes = null;  // mês do lançamento mais antigo
+  let evoDados = [];
+  let evoItens = new Map();   // chave da descrição → { nome, porMes }
+  let evoItem = null;
+  let graficoMeses = null;
+  let graficoItem = null;
+
+  const rotuloMes = (iso) => `${MESES[dataDeIso(iso).getMonth()]}/${iso.slice(2, 4)}`;   // 'nov/26'
+  // 'TV - 4/21' e 'TV - 5/21' são o mesmo item
+  const semParcela = (descricao) => descricao.replace(/[\s-]*\d+\s*\/\s*\d+\s*$/, '').trim() || descricao;
+  const fmtEixo = (v) => (Math.abs(v) >= 1000 ? `${(v / 1000).toLocaleString('pt-BR', { maximumFractionDigits: 1 })} mil` : String(v));
+
+  // O Supabase devolve no máximo 1.000 linhas por consulta: busca página por página
+  async function buscarTudo(montar) {
+    const pagina = 1000;
+    let todos = [];
+    for (let i = 0; ; i += pagina) {
+      const { data, error } = await montar().range(i, i + pagina - 1);
+      if (error) return { error };
+      todos = todos.concat(data);
+      if (data.length < pagina) return { data: todos };
+    }
+  }
+
+  function aplicarAtalho(nome) {
+    const atual = inicioMes(hoje());
+    evoAtalho = nome;
+    evoAte = atual;
+    if (nome === 'ano') evoDe = atual.slice(0, 4) + '-01-01';
+    else if (nome === 'tudo') evoDe = evoPrimeiroMes && evoPrimeiroMes < atual ? evoPrimeiroMes : atual;
+    else evoDe = somarMeses(atual, -(Number(nome) - 1));
+  }
+
+  function desenharPeriodo() {
+    const atual = inicioMes(hoje());
+    const inicio = [evoPrimeiroMes, evoDe, atual].filter(Boolean).sort()[0];
+    const meses = intervaloMeses(inicio, [somarMeses(atual, 12), evoAte].sort()[1]);
+    opcoesMeses('#evo-de', meses, evoDe);
+    opcoesMeses('#evo-ate', meses, evoAte);
+    $$('#evo-atalhos .chip').forEach((c) => c.setAttribute('aria-pressed', String(c.dataset.periodo === evoAtalho)));
+  }
+
+  async function carregarEvolucao() {
+    const r = await supabase.from('lancamentos').select('mes').order('mes').limit(1);
+    if (r.error) return aviso(r.error.message, true);
+    evoPrimeiroMes = r.data[0]?.mes ?? null;
+    if (!evoDe || evoAtalho) aplicarAtalho(evoAtalho ?? '12');
+    desenharPeriodo();
+    const de = evoDe;
+    const ate = evoAte;
+    const { data, error } = await buscarTudo(() => supabase.from('lancamentos')
+      .select('mes, tipo, valor, grupo, categoria_id, descricao').gte('mes', de).lte('mes', ate).order('id'));
+    if (error) return aviso(error.message, true);
+    if (de !== evoDe || ate !== evoAte) return;   // o período mudou enquanto buscava
+    evoDados = data;
+    desenharEvolucao();
+  }
+
+  function desenharEvolucao() {
+    const vazio = !evoDados.length;
+    $('#evo-vazio').hidden = !vazio;
+    $('#evo-conteudo').hidden = vazio;
+    if (vazio) return;
+
+    const meses = intervaloMeses(evoDe, evoAte);
+    const porMes = new Map(meses.map((m) => [m, { essencial: 0, diversao: 0, investimento: 0, receita: 0 }]));
+    const porCategoria = new Map();
+    evoItens = new Map();
+    evoDados.forEach((l) => {
+      const c = centavos(l.valor);
+      const m = porMes.get(l.mes);
+      if (l.tipo === 'receita') { m.receita += c; return; }
+      m[l.grupo] += c;
+      porCategoria.set(l.categoria_id, (porCategoria.get(l.categoria_id) ?? 0) + c);
+      const nome = semParcela(l.descricao.trim());
+      const chave = normalizar(nome);
+      if (!evoItens.has(chave)) evoItens.set(chave, { nome, porMes: new Map() });
+      const item = evoItens.get(chave);
+      item.porMes.set(l.mes, (item.porMes.get(l.mes) ?? 0) + c);
+    });
+
+    const gastoDe = (m) => GRUPOS.reduce((s, g) => s + porMes.get(m)[g.id], 0);
+    const gasto = meses.reduce((s, m) => s + gastoDe(m), 0);
+    const receita = meses.reduce((s, m) => s + porMes.get(m).receita, 0);
+    const maior = meses.reduce((a, m) => (gastoDe(m) > gastoDe(a) ? m : a), meses[0]);
+    // Médias só sobre os meses que têm lançamentos (um período longo pode ter meses vazios)
+    const n = meses.filter((m) => gastoDe(m) !== 0 || porMes.get(m).receita !== 0).length || 1;
+    const sobra = Math.round((receita - gasto) / n);
+    $('#evo-resumo').innerHTML = `
+      <div class="stat"><span>Gasto médio por mês</span><b>${fmtReais(Math.round(gasto / n))}</b></div>
+      <div class="stat"><span>Receita média por mês</span><b class="positivo">${fmtReais(Math.round(receita / n))}</b></div>
+      <div class="stat"><span>Sobra média por mês</span><b class="${sobra < 0 ? 'negativo' : 'positivo'}">${fmtReais(sobra)}</b></div>
+      <div class="stat"><span>Maior mês · ${rotuloMes(maior)}</span><b>${fmtReais(gastoDe(maior))}</b></div>`;
+
+    desenharGraficoMeses(meses, porMes);
+    desenharCategoriasEvolucao(porCategoria, gasto);
+    desenharOpcoesItem();
+    desenharGraficoItem();
+  }
+
+  // O Chart.js não lê variáveis CSS: as cores abaixo espelham os tokens (ver DESIGN.md)
+  const FONTE_GRAFICO = 'Barlow, "Segoe UI", system-ui, sans-serif';
+  const eixoX = { grid: { display: false }, ticks: { color: '#9BA1AA', font: { family: FONTE_GRAFICO } }, border: { color: '#2A2E34' } };
+  const eixoY = { beginAtZero: true, grid: { color: '#22252A' }, border: { display: false },
+    ticks: { color: '#9BA1AA', font: { family: FONTE_GRAFICO }, callback: fmtEixo } };
+  const dica = { backgroundColor: '#202328', borderColor: '#3A3F47', borderWidth: 1, titleColor: '#F2F3F5', bodyColor: '#C9CDD3',
+    footerColor: '#F2F3F5', padding: 10 };
+  const emReais = (v) => fmtReais(Math.round(v * 100));
+
+  function desenharGraficoMeses(meses, porMes) {
+    graficoMeses?.destroy();
+    graficoMeses = new Chart($('#grafico-meses'), {
+      type: 'bar',
+      data: {
+        labels: meses.map(rotuloMes),
+        datasets: [
+          { type: 'line', label: 'Receita', data: meses.map((m) => porMes.get(m).receita / 100), order: 0, stack: 'receita',
+            borderColor: '#F2F3F5', backgroundColor: '#F2F3F5', borderWidth: 2, pointRadius: 2, tension: 0 },
+          ...GRUPOS.map((g) => ({ label: g.nome, data: meses.map((m) => porMes.get(m)[g.id] / 100), order: 1, stack: 'gasto',
+            backgroundColor: g.cor, borderRadius: 3, maxBarThickness: 36 })),
+        ],
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { labels: { color: '#C9CDD3', boxWidth: 12, boxHeight: 12, font: { family: FONTE_GRAFICO } } },
+          tooltip: { ...dica, callbacks: {
+            label: (c) => `${c.dataset.label}: ${emReais(c.parsed.y)}`,
+            footer: (itens) => `Gasto: ${emReais(itens.filter((i) => i.dataset.stack === 'gasto').reduce((s, i) => s + i.parsed.y, 0))}`,
+          } },
+        },
+        scales: { x: { ...eixoX, stacked: true }, y: { ...eixoY, stacked: true } },
+      },
+    });
+  }
+
+  function desenharCategoriasEvolucao(porCategoria, gasto) {
+    const lista = [...porCategoria].sort((a, b) => b[1] - a[1]);
+    const maior = Math.max(...lista.map(([, c]) => c), 1);
+    $('#evo-categorias').innerHTML = lista.length ? `<ul class="barras-cat cartao">${lista.map(([id, c]) => `<li>
+      <div class="linha-cat"><span>${esc(nomeCategoria(id) ?? 'Sem categoria')}</span>
+        <span class="num-fonte">${fmtReais(c)} <small>${gasto > 0 ? Math.round((c / gasto) * 100) : 0}%</small></span></div>
+      <div class="trilho"><span style="width: ${Math.max(0, (c / maior) * 100)}%"></span></div>
+    </li>`).join('')}</ul>` : '<div class="cartao vazio">Nenhum gasto no período.</div>';
+  }
+
+  // Itens em ordem de frequência: os que aparecem em mais meses primeiro
+  function desenharOpcoesItem() {
+    const total = (i) => [...i.porMes.values()].reduce((s, c) => s + c, 0);
+    const lista = [...evoItens].sort((a, b) => b[1].porMes.size - a[1].porMes.size || total(b[1]) - total(a[1])).slice(0, 200);
+    if (!evoItens.has(evoItem)) evoItem = lista[0]?.[0] ?? null;
+    if (evoItem && !lista.some(([k]) => k === evoItem)) lista.push([evoItem, evoItens.get(evoItem)]);
+    $('#evo-item').innerHTML = lista.map(([k, i]) => `<option value="${esc(k)}">${esc(i.nome)}</option>`).join('');
+    $('#evo-item').value = evoItem ?? '';
+  }
+
+  function desenharGraficoItem() {
+    graficoItem?.destroy();
+    graficoItem = null;
+    const item = evoItens.get(evoItem);
+    if (!item) { $('#evo-item-resumo').textContent = ''; return; }
+    const meses = intervaloMeses(evoDe, evoAte);
+    const valores = [...item.porMes.values()];
+    const media = Math.round(valores.reduce((s, c) => s + c, 0) / valores.length);
+    $('#evo-item-resumo').textContent = valores.length === 1
+      ? `Apareceu em 1 mês: ${fmtReais(valores[0])}.`
+      : `Média de ${fmtReais(media)} nos ${valores.length} meses em que apareceu, de ${fmtReais(Math.min(...valores))} a ${fmtReais(Math.max(...valores))}.`;
+    graficoItem = new Chart($('#grafico-item'), {
+      type: 'line',
+      data: {
+        labels: meses.map(rotuloMes),
+        // Mês sem o item fica sem ponto (não é zero)
+        datasets: [{ label: item.nome, data: meses.map((m) => (item.porMes.has(m) ? item.porMes.get(m) / 100 : null)),
+          borderColor: '#FF6A3D', backgroundColor: '#FF6A3D', borderWidth: 2, pointRadius: 3, tension: 0, spanGaps: true }],
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
+        plugins: { legend: { display: false }, tooltip: { ...dica, callbacks: { label: (c) => emReais(c.parsed.y) } } },
+        scales: { x: eixoX, y: eixoY },
+      },
+    });
+  }
+
+  $('#evo-atalhos').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-periodo]');
+    if (!b) return;
+    aplicarAtalho(b.dataset.periodo);
+    carregarEvolucao();
+  });
+  ['#evo-de', '#evo-ate'].forEach((id) => $(id).addEventListener('change', () => {
+    evoAtalho = null;
+    evoDe = $('#evo-de').value;
+    evoAte = $('#evo-ate').value;
+    // "De" depois de "Até": o período vira só o mês que acabou de ser escolhido
+    if (evoDe > evoAte) { if (id === '#evo-de') evoAte = evoDe; else evoDe = evoAte; }
+    carregarEvolucao();
+  }));
+  $('#evo-item').addEventListener('change', () => {
+    evoItem = $('#evo-item').value;
+    desenharGraficoItem();
   });
 </script>
 </body>
