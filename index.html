@@ -42,7 +42,13 @@
   input, select, textarea { width: 100%; min-height: 48px; padding: 0 14px; border-radius: var(--raio-p);
          border: 1px solid var(--borda); background: var(--superficie-2); color: var(--texto); font-size: 16px; }
   input::placeholder { color: var(--apagado); }
+  select { appearance: none; -webkit-appearance: none; padding-right: 40px;
+           background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%239BA1AA' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+           background-repeat: no-repeat; background-position: right 12px center; }
+  input[type=date] { color-scheme: dark; }
+  input[type=checkbox] { width: 24px; height: 24px; min-height: 0; margin: 0; flex: none; accent-color: var(--destaque); }
   .campo { margin-bottom: 14px; }
+  fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
 
   .botao { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px;
            padding: 0 18px; border-radius: 14px; border: 1px solid var(--borda); background: transparent;
@@ -56,10 +62,43 @@
            background: transparent; color: var(--suave); display: inline-grid; place-items: center; }
   .icone:hover { color: var(--texto); background: var(--superficie-2); }
   .icone.perigo:hover { color: var(--erro); }
+  .botao.perigo { color: var(--erro); border-color: var(--borda); }
+  .botao.perigo:hover { border-color: var(--erro); }
+  .linha { display: flex; gap: 10px; }
+  .linha > * { flex: 1; min-width: 0; }
 
   .sobretitulo { font-size: .8125rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--suave); }
   .cartao { background: var(--superficie); border: 1px solid var(--borda); border-radius: 20px; }
   .vazio { color: var(--suave); text-align: center; padding: 28px 16px; }
+
+  .segmento { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; padding: 4px;
+              border-radius: var(--raio-p); background: var(--superficie); border: 1px solid var(--borda); }
+  .segmento.tres { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .segmento button { min-height: 40px; border-radius: 9px; border: 0; background: transparent; color: var(--suave);
+                     font-size: 15px; font-weight: 600; }
+  .segmento button[aria-selected="true"], .segmento button[aria-pressed="true"] { background: var(--borda); color: var(--texto); font-weight: 700; }
+  .sheet .segmento { background: var(--superficie-2); }
+  .sheet .segmento button[aria-pressed="true"] { background: var(--borda-forte); }
+
+  .busca { position: relative; margin: 0; }
+  .busca svg { position: absolute; left: 14px; top: 15px; color: var(--suave); pointer-events: none; }
+  .busca input { padding-left: 42px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip { min-height: 40px; padding: 0 14px; border-radius: 20px; border: 1px solid var(--borda-forte); background: transparent;
+          color: var(--texto-2); font-size: 14px; font-weight: 600; }
+  .chip[aria-pressed="true"] { background: var(--texto); border-color: var(--texto); color: var(--bg); }
+  .chips.rolavel { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin: 0 -16px; padding: 0 16px; }
+  .chips.rolavel::-webkit-scrollbar { display: none; }
+  .chips.rolavel .chip { flex: none; }
+
+  .resumo { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 0 0 8px; }
+  .resumo .stat:last-child { grid-column: 1 / -1; }
+  .stat { padding: 12px 14px; display: flex; flex-direction: column; gap: 2px; border-radius: var(--raio);
+          background: var(--superficie); border: 1px solid var(--borda); min-width: 0; }
+  .stat span { font-size: 13px; color: var(--suave); }
+  .stat b { font-family: var(--fonte-titulo); font-size: 22px; font-weight: 700; line-height: 1.05;
+            font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .positivo { color: var(--ok); } .negativo { color: var(--erro); }
 
   /* ---------- login ---------- */
   .login { min-height: 100vh; min-height: 100dvh; display: grid; place-items: center; padding: 24px 16px; }
@@ -100,6 +139,23 @@
   .selo-leitura { align-self: flex-start; padding: 4px 10px; border-radius: 12px; background: var(--superficie);
                   border: 1px solid var(--borda-forte); color: var(--texto-2); font-size: 12px; font-weight: 700; }
 
+  /* ---------- sheets (dialog) ---------- */
+  dialog.sheet { width: 100%; max-width: 640px; max-height: calc(100dvh - 48px); margin: auto auto 0; padding: 0;
+                 border: 0; border-top: 1px solid var(--borda); border-radius: 28px 28px 0 0;
+                 background: var(--superficie); color: var(--texto); overflow: hidden; }
+  dialog.sheet[open] { display: flex; flex-direction: column; animation: subir .22s ease-out; }
+  dialog.sheet::backdrop { background: rgba(5, 6, 8, .65); }
+  @keyframes subir { from { transform: translateY(40px); opacity: 0; } to { transform: none; opacity: 1; } }
+  .sheet-alca { width: 40px; height: 5px; border-radius: 3px; background: var(--borda-forte); margin: 10px auto 0; flex: none; }
+  .sheet-cabeca { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 16px 4px; flex: none; }
+  .sheet-cabeca h2 { font-family: var(--fonte-titulo); font-size: 28px; font-weight: 700; line-height: 1.05; }
+  .sheet-cabeca .icone { background: var(--superficie-2); color: var(--texto-2); }
+  .sheet-corpo { overflow-y: auto; padding: 12px 16px calc(20px + var(--seguro-baixo)); display: flex; flex-direction: column; gap: 4px; }
+
+  .fab { position: fixed; right: 16px; bottom: calc(var(--altura-nav) + var(--seguro-baixo) + 16px); z-index: 15;
+         min-height: 56px; padding: 0 20px 0 16px; border-radius: 28px; border: 0; background: var(--texto); color: var(--bg);
+         display: flex; align-items: center; gap: 8px; font-size: 16px; font-weight: 700; box-shadow: 0 8px 24px rgba(0,0,0,.45); }
+
   /* ---------- mês ---------- */
   .topo-mes { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 20px 0 16px; }
   .seletor-mes { display: flex; align-items: center; gap: 4px; min-width: 0; }
@@ -107,6 +163,39 @@
   .seletor-mes h1 { min-width: 0; text-align: center; white-space: nowrap; }
   .seletor-mes h1 small { display: block; font-family: var(--fonte); font-size: .8125rem; font-weight: 700; letter-spacing: .08em;
                           text-transform: uppercase; color: var(--suave); margin-bottom: 4px; }
+
+  /* ---------- lançamentos ---------- */
+  .topo-lancamentos { display: flex; flex-direction: column; gap: 12px; padding: 20px 0 12px; }
+  .topo-lancamentos .seletor-mes { justify-content: space-between; }
+  #aba-lancamentos { padding-bottom: 80px; }
+  .dia { display: flex; flex-direction: column; gap: 8px; margin-top: 18px; }
+  .dia-topo { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 0 4px;
+              font-size: 13px; font-weight: 600; color: var(--suave); }
+  .lancs { list-style: none; margin: 0; padding: 0; overflow: hidden; }
+  .lancs li + li { border-top: 1px solid var(--borda-suave); }
+  .lanc { width: 100%; display: flex; align-items: center; gap: 12px; min-height: 60px; padding: 10px 14px;
+          border: 0; background: transparent; text-align: left; color: var(--texto); }
+  button.lanc:hover { background: var(--superficie-2); }
+  .lanc .info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+  .lanc .info strong { font-weight: 600; overflow-wrap: anywhere; }
+  .lanc .info small { color: var(--suave); font-size: 13px; }
+  .lanc .valor { flex: none; text-align: right; font-family: var(--fonte-titulo); font-size: 20px; font-weight: 700;
+                 font-variant-numeric: tabular-nums; }
+  .lanc .valor small { display: block; font-family: var(--fonte); font-size: 12px; font-weight: 600; color: var(--suave); }
+  .selo-pagar { display: inline-block; padding: 0 8px; border-radius: 10px; border: 1px solid var(--destaque);
+                color: var(--destaque); font-size: 12px; font-weight: 700; line-height: 18px; }
+
+  /* lançamento rápido */
+  .valor-caixa { position: relative; }
+  .valor-caixa span { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-family: var(--fonte-titulo);
+                      font-size: 22px; font-weight: 600; color: var(--suave); pointer-events: none; }
+  .valor-caixa input { min-height: 64px; padding-left: 48px; font-family: var(--fonte-titulo); font-size: 34px; font-weight: 700;
+                       font-variant-numeric: tabular-nums; }
+  .alternar { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 52px; margin: 0;
+              padding: 0 4px; font-size: 16px; font-weight: 500; color: var(--texto); cursor: pointer; }
+  .alternar small { display: block; font-size: 13px; color: var(--suave); font-weight: 400; }
+  .acoes-form { display: flex; gap: 10px; margin-top: 8px; }
+  .acoes-form .primario { flex: 1; }
 
   #aviso { position: fixed; left: 50%; bottom: calc(var(--altura-nav) + var(--seguro-baixo) + 88px); z-index: 40;
            transform: translate(-50%, 30px); opacity: 0; pointer-events: none;
@@ -131,6 +220,16 @@
     .nav-botao[aria-current="page"] { background: var(--destaque-fundo); }
     .conteudo { max-width: 1120px; padding: 12px 40px 48px; margin: 0; width: 100%; }
     .topo-mes { padding-top: 28px; }
+    .topo-lancamentos { padding-top: 28px; display: grid; grid-template-columns: auto minmax(0, 360px); align-items: center; column-gap: 24px; }
+    .topo-lancamentos .chips { grid-column: 1 / -1; }
+    .topo-lancamentos .seletor-mes { justify-content: flex-start; }
+    .chips.rolavel { flex-wrap: wrap; margin: 0; padding: 0; }
+    .lista-lancamentos { max-width: 760px; }
+    .resumo { max-width: 760px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .resumo .stat:last-child { grid-column: auto; }
+    .fab { position: fixed; bottom: 32px; right: 40px; }
+    dialog.sheet { margin: auto; border-radius: 24px; border: 1px solid var(--borda); max-height: calc(100vh - 80px); }
+    .sheet-alca { display: none; }
     #aviso { bottom: 32px; }
   }
   @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
@@ -184,11 +283,11 @@
       <section id="aba-mes" class="aba">
         <header class="topo-mes">
           <div class="seletor-mes">
-            <button id="mes-anterior" class="icone" type="button" aria-label="Mês anterior">
+            <button class="icone" type="button" data-mudar-mes="-1" aria-label="Mês anterior">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
             </button>
-            <h1 class="titulo-pagina"><small id="ano-mes"></small><span id="nome-mes"></span></h1>
-            <button id="mes-seguinte" class="icone" type="button" aria-label="Próximo mês">
+            <h1 class="titulo-pagina"><small class="ano-mes"></small><span class="nome-mes"></span></h1>
+            <button class="icone" type="button" data-mudar-mes="1" aria-label="Próximo mês">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
             </button>
           </div>
@@ -201,13 +300,36 @@
             </div>
           </div>
         </header>
-        <div class="cartao vazio">O resumo do mês, com o que falta pagar, chega nas próximas etapas.</div>
+        <div class="cartao vazio">O resumo do mês, com o que falta pagar, chega na próxima etapa. Por enquanto, veja tudo em “Lançamentos”.</div>
       </section>
 
       <!-- Lançamentos -->
       <section id="aba-lancamentos" class="aba" hidden>
-        <header class="pagina-topo"><h1>Lançamentos</h1></header>
-        <div class="cartao vazio">Os lançamentos do mês aparecem aqui a partir da próxima etapa.</div>
+        <header class="topo-lancamentos">
+          <div class="seletor-mes">
+            <button class="icone" type="button" data-mudar-mes="-1" aria-label="Mês anterior">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
+            </button>
+            <h1 class="titulo-pagina"><small class="ano-mes"></small><span class="nome-mes"></span></h1>
+            <button class="icone" type="button" data-mudar-mes="1" aria-label="Próximo mês">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+            </button>
+          </div>
+          <div class="busca">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+            <input id="busca-lancamento" type="search" placeholder="Buscar descrição, categoria ou meio" aria-label="Buscar lançamento">
+          </div>
+          <div id="filtros-lancamento" class="chips rolavel" role="group" aria-label="Filtrar lançamentos">
+            <button class="chip" type="button" data-filtro="todos" aria-pressed="true">Todos</button>
+            <button class="chip" type="button" data-filtro="essencial" aria-pressed="false">Essencial</button>
+            <button class="chip" type="button" data-filtro="diversao" aria-pressed="false">Diversão</button>
+            <button class="chip" type="button" data-filtro="investimento" aria-pressed="false">Investimento</button>
+            <button class="chip" type="button" data-filtro="receita" aria-pressed="false">Receitas</button>
+            <button class="chip" type="button" data-filtro="pendente" aria-pressed="false">A pagar</button>
+          </div>
+        </header>
+        <div id="resumo-lancamentos" class="resumo"></div>
+        <div id="lista-lancamentos" class="lista-lancamentos"></div>
       </section>
 
       <!-- Fixas -->
@@ -222,8 +344,76 @@
         <div class="cartao vazio">Os gráficos dos últimos 12 meses aparecem aqui em breve.</div>
       </section>
     </div>
+
+    <button id="novo-lancamento" class="fab so-dono" type="button">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+      Lançar
+    </button>
   </section>
 </main>
+
+<!-- ============ SHEETS ============ -->
+<dialog id="dlg-lancamento" class="sheet" aria-labelledby="titulo-lancamento">
+  <div class="sheet-alca" aria-hidden="true"></div>
+  <div class="sheet-cabeca">
+    <h2 id="titulo-lancamento">Novo lançamento</h2>
+    <button class="icone" type="button" data-fechar aria-label="Fechar">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+  </div>
+  <form id="form-lancamento" class="sheet-corpo" novalidate>
+    <div id="lanc-tipo" class="segmento campo" role="group" aria-label="Tipo de lançamento">
+      <button type="button" data-tipo="despesa" aria-pressed="true">Despesa</button>
+      <button type="button" data-tipo="receita" aria-pressed="false">Receita</button>
+    </div>
+    <div class="campo">
+      <label for="lanc-valor">Valor</label>
+      <div class="valor-caixa"><span aria-hidden="true">R$</span>
+        <input id="lanc-valor" type="text" inputmode="decimal" autocomplete="off" placeholder="0,00" required></div>
+    </div>
+    <div class="campo">
+      <label for="lanc-descricao">Descrição</label>
+      <input id="lanc-descricao" type="text" list="sugestoes-descricao" autocomplete="off" maxlength="120" required>
+      <datalist id="sugestoes-descricao"></datalist>
+    </div>
+    <div class="linha">
+      <div class="campo">
+        <label for="lanc-data">Data</label>
+        <input id="lanc-data" type="date" required>
+      </div>
+      <div class="campo">
+        <label for="lanc-mes">Entra no mês</label>
+        <select id="lanc-mes"></select>
+      </div>
+    </div>
+    <div class="campo">
+      <span id="rotulo-meio" class="rotulo-campo">Meio de pagamento</span>
+      <div id="lanc-meios" class="chips" role="group" aria-labelledby="rotulo-meio"></div>
+    </div>
+    <div class="campo so-despesa">
+      <span id="rotulo-grupo" class="rotulo-campo">Grupo</span>
+      <div id="lanc-grupos" class="segmento tres" role="group" aria-labelledby="rotulo-grupo">
+        <button type="button" data-grupo="essencial" aria-pressed="false">Essencial</button>
+        <button type="button" data-grupo="diversao" aria-pressed="false">Diversão</button>
+        <button type="button" data-grupo="investimento" aria-pressed="false">Investimento</button>
+      </div>
+    </div>
+    <div class="campo">
+      <label for="lanc-categoria">Categoria</label>
+      <select id="lanc-categoria"></select>
+    </div>
+    <label class="alternar"><span>Já foi pago</span><input id="lanc-pago" type="checkbox" checked></label>
+    <label class="alternar so-despesa"><span>É um reembolso<small>Entra com valor negativo e abate o gasto</small></span><input id="lanc-reembolso" type="checkbox"></label>
+    <div class="campo">
+      <label for="lanc-obs">Observação</label>
+      <input id="lanc-obs" type="text" maxlength="300" autocomplete="off">
+    </div>
+    <div class="acoes-form">
+      <button id="excluir-lancamento" class="botao perigo" type="button" hidden>Excluir</button>
+      <button id="salvar-lancamento" class="botao primario grande" type="submit">Salvar lançamento</button>
+    </div>
+  </form>
+</dialog>
 
 <div id="aviso" role="status"></div>
 
@@ -277,6 +467,21 @@
   }
   const nomeMes = (iso) => MESES_LONGOS[dataDeIso(iso).getMonth()];
 
+  // Dinheiro: o banco guarda numeric(12,2) ('59.90'); as contas no JS são em centavos inteiros
+  const BRL = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+  const centavos = (valor) => Math.round(Number(valor) * 100);
+  const fmtReais = (c) => BRL.format(c / 100);                        // 5990 → 'R$ 59,90'
+  const paraBanco = (c) => (c / 100).toFixed(2);                      // 5990 → '59.90'
+  const valorCampo = (c) => (c / 100).toFixed(2).replace('.', ',');   // 5990 → '59,90'
+  // '1.234,56', '59,9', '59.90', 'R$ 12' → centavos; null quando não é um valor
+  function lerReais(texto) {
+    let s = String(texto).replace(/R\$|\s/g, '');
+    if (s.includes(',')) s = s.replace(/\./g, '').replace(',', '.');
+    else if (/^\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g, '');
+    if (!/^\d+(\.\d{1,2})?$/.test(s)) return null;
+    return Math.round(Number(s) * 100);
+  }
+
   const porNome = (a, b) => a.nome.localeCompare(b.nome, 'pt-BR');
   const normalizar = (s) => String(s).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 
@@ -297,6 +502,23 @@
     clearTimeout(timerAviso);
     timerAviso = setTimeout(() => { t.className = ''; }, 3500);
   }
+
+  // ---------- sheets (dialog) ----------
+  function abrirDialogo(id) {
+    const d = $(id);
+    if (!d.open) d.showModal();
+  }
+  function fecharDialogo(id) {
+    const d = $(id);
+    if (d.open) d.close();
+  }
+  $$('dialog').forEach((d) => {
+    d.addEventListener('click', (e) => {
+      // Toque fora do conteúdo (no fundo escurecido) fecha
+      if (e.target === d) d.close();
+      if (e.target.closest('[data-fechar]')) d.close();
+    });
+  });
 
   // ---------- autenticação ----------
   // Não há "Criar conta": o banco é pessoal e as contas são criadas pelo painel do Supabase
@@ -358,6 +580,8 @@
     desenharMes();
     abrirAba('mes');
     await carregarLeitura();
+    await carregarListas();
+    await Promise.all([carregarLancamentos(), carregarHistorico()]);
   }
 
   // ---------- modo leitura ----------
@@ -391,11 +615,311 @@
   let mesAtual = inicioMes(hoje());
 
   function desenharMes() {
-    $('#nome-mes').textContent = nomeMes(mesAtual);
-    $('#ano-mes').textContent = mesAtual.slice(0, 4);
+    $$('.nome-mes').forEach((el) => { el.textContent = nomeMes(mesAtual); });
+    $$('.ano-mes').forEach((el) => { el.textContent = mesAtual.slice(0, 4); });
   }
-  $('#mes-anterior').addEventListener('click', () => { mesAtual = somarMeses(mesAtual, -1); desenharMes(); });
-  $('#mes-seguinte').addEventListener('click', () => { mesAtual = somarMeses(mesAtual, 1); desenharMes(); });
+  $$('[data-mudar-mes]').forEach((b) => b.addEventListener('click', () => {
+    mesAtual = somarMeses(mesAtual, Number(b.dataset.mudarMes));
+    desenharMes();
+    carregarLancamentos();
+  }));
+
+  // ---------- listas (meios de pagamento e categorias) ----------
+  // Listas comuns, mantidas pelo SQL Editor; o app só lê
+  let meios = [];
+  let categorias = [];
+  const nomeMeio = (id) => meios.find((m) => m.id === id)?.nome;
+  const nomeCategoria = (id) => categorias.find((c) => c.id === id)?.nome;
+
+  async function carregarListas() {
+    const [rm, rc] = await Promise.all([
+      supabase.from('meios_pagamento').select('*'),
+      supabase.from('categorias').select('*'),
+    ]);
+    if (rm.error) return aviso(rm.error.message, true);
+    if (rc.error) return aviso(rc.error.message, true);
+    meios = rm.data.sort(porNome);
+    categorias = rc.data.sort(porNome);
+  }
+
+  // ---------- lançamentos ----------
+  let lancamentos = [];   // do mês atual
+  let filtro = 'todos';
+
+  async function carregarLancamentos() {
+    const mes = mesAtual;
+    const { data, error } = await supabase.from('lancamentos').select('*')
+      .eq('mes', mes).order('data', { ascending: false }).order('id', { ascending: false });
+    if (error) return aviso(error.message, true);
+    if (mes !== mesAtual) return;   // o mês mudou enquanto buscava
+    lancamentos = data;
+    desenharLancamentos();
+  }
+
+  function passaNoFiltro(l, termo) {
+    if (filtro === 'receita' && l.tipo !== 'receita') return false;
+    if (filtro === 'pendente' && l.pago) return false;
+    if (['essencial', 'diversao', 'investimento'].includes(filtro) && l.grupo !== filtro) return false;
+    if (!termo) return true;
+    const texto = [l.descricao, nomeCategoria(l.categoria_id), nomeMeio(l.meio_pagamento_id), l.observacao];
+    return normalizar(texto.filter(Boolean).join(' ')).includes(termo);
+  }
+
+  function desenharLancamentos() {
+    const termo = normalizar($('#busca-lancamento').value.trim());
+    const lista = lancamentos.filter((l) => passaNoFiltro(l, termo));
+
+    // Totais em centavos (reembolso é despesa negativa e abate as saídas)
+    let entradas = 0;
+    let saidas = 0;
+    lista.forEach((l) => {
+      if (l.tipo === 'receita') entradas += centavos(l.valor); else saidas += centavos(l.valor);
+    });
+    const saldo = entradas - saidas;
+    $('#resumo-lancamentos').innerHTML = `
+      <div class="stat"><span>Entradas</span><b class="positivo">${fmtReais(entradas)}</b></div>
+      <div class="stat"><span>Saídas</span><b>${fmtReais(saidas)}</b></div>
+      <div class="stat"><span>Saldo</span><b class="${saldo < 0 ? 'negativo' : 'positivo'}">${fmtReais(saldo)}</b></div>`;
+
+    if (!lista.length) {
+      const msg = lancamentos.length
+        ? 'Nenhum lançamento com esse filtro.'
+        : `Nenhum lançamento em ${nomeMes(mesAtual).toLowerCase()}.${modoLeitura ? '' : ' Toque em “Lançar” para começar.'}`;
+      $('#lista-lancamentos').innerHTML = `<div class="cartao vazio">${msg}</div>`;
+      return;
+    }
+
+    const porDia = new Map();
+    lista.forEach((l) => {
+      if (!porDia.has(l.data)) porDia.set(l.data, []);
+      porDia.get(l.data).push(l);
+    });
+    $('#lista-lancamentos').innerHTML = [...porDia].map(([dia, itens]) => {
+      const gastoDia = itens.filter((l) => l.tipo === 'despesa').reduce((s, l) => s + centavos(l.valor), 0);
+      return `<section class="dia">
+        <div class="dia-topo"><span>${esc(fmtDia(dia))}</span>${gastoDia > 0 ? `<span class="num-fonte">${fmtReais(gastoDia)}</span>` : ''}</div>
+        <ul class="lancs cartao">${itens.map(itemLancamento).join('')}</ul>
+      </section>`;
+    }).join('');
+  }
+
+  function itemLancamento(l) {
+    const c = centavos(l.valor);
+    const receita = l.tipo === 'receita';
+    const reembolso = !receita && c < 0;
+    const detalhes = [nomeCategoria(l.categoria_id), nomeMeio(l.meio_pagamento_id)].filter(Boolean).map(esc).join(' · ');
+    const pendente = l.pago ? '' : ' <span class="selo-pagar">a pagar</span>';
+    const info = `<span class="info"><strong>${esc(l.descricao)}</strong><small>${detalhes}${pendente}</small></span>`;
+    const valor = `<span class="valor${receita || reembolso ? ' positivo' : ''}">${receita || reembolso ? '+ ' : ''}${fmtReais(Math.abs(c))}${reembolso ? '<small>reembolso</small>' : ''}</span>`;
+    return modoLeitura
+      ? `<li><div class="lanc">${info}${valor}</div></li>`
+      : `<li><button class="lanc" type="button" data-id="${l.id}">${info}${valor}</button></li>`;
+  }
+
+  $('#busca-lancamento').addEventListener('input', desenharLancamentos);
+  $('#filtros-lancamento').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-filtro]');
+    if (!b) return;
+    filtro = b.dataset.filtro;
+    $$('#filtros-lancamento .chip').forEach((c) => c.setAttribute('aria-pressed', String(c === b)));
+    desenharLancamentos();
+  });
+  $('#lista-lancamentos').addEventListener('click', (e) => {
+    const b = e.target.closest('.lanc[data-id]');
+    if (b) abrirLancamento(lancamentos.find((l) => l.id === Number(b.dataset.id)));
+  });
+
+  // ---------- histórico de descrições (autocompletar) ----------
+  // Última vez que cada descrição foi usada. Escolher uma delas no formulário repete
+  // tipo, grupo, categoria, meio e valor, como o gym repete as séries do último registro
+  let ultimos = new Map();   // normalizar(descricao) → lançamento mais recente
+
+  async function carregarHistorico() {
+    const { data, error } = await supabase.from('lancamentos')
+      .select('descricao, tipo, valor, grupo, categoria_id, meio_pagamento_id')
+      .order('data', { ascending: false }).order('id', { ascending: false }).limit(2000);
+    if (error) return aviso(error.message, true);
+    ultimos = new Map();
+    data.forEach((l) => {
+      const chave = normalizar(l.descricao.trim());
+      if (!ultimos.has(chave)) ultimos.set(chave, l);
+    });
+    $('#sugestoes-descricao').innerHTML = [...ultimos.values()].slice(0, 400)
+      .map((l) => `<option value="${esc(l.descricao)}"></option>`).join('');
+  }
+
+  // ---------- lançamento rápido ----------
+  let editando = null;      // lançamento em edição (null = novo)
+  let tipoForm = 'despesa';
+  let grupoForm = null;
+  let meioForm = null;
+  let mesTocado = false;    // o mês foi escolhido à mão
+  let pagoTocado = false;   // "Já foi pago" foi marcado à mão
+
+  // Mês em que o lançamento é pago. No cartão, é o mês de vencimento da fatura em que a compra cai
+  function mesDoPagamento(dataIso, meio) {
+    const mes = inicioMes(dataIso);
+    if (meio?.tipo !== 'cartao' || !meio.dia_fechamento || !meio.dia_vencimento) return mes;
+    let soma = dataDeIso(dataIso).getDate() >= meio.dia_fechamento ? 1 : 0;   // fatura já fechou: vai para a próxima
+    if (meio.dia_vencimento <= meio.dia_fechamento) soma += 1;               // vence no mês seguinte ao fechamento
+    return somarMeses(mes, soma);
+  }
+
+  function atualizarMesForm(escolhido) {
+    const data = $('#lanc-data').value || hoje();
+    const calculado = mesDoPagamento(data, meios.find((m) => m.id === meioForm));
+    const atual = escolhido ?? (mesTocado ? $('#lanc-mes').value : calculado);
+    const opcoes = new Set([-1, 0, 1, 2].map((n) => somarMeses(inicioMes(data), n)));
+    opcoes.add(calculado);
+    if (atual) opcoes.add(atual);
+    $('#lanc-mes').innerHTML = [...opcoes].sort()
+      .map((m) => `<option value="${m}">${nomeMes(m)} ${m.slice(0, 4)}</option>`).join('');
+    $('#lanc-mes').value = atual || calculado;
+  }
+
+  // Compra no cartão fica "a pagar" até a fatura ser paga; o resto é pago se a data já passou
+  function sugerirPago() {
+    if (pagoTocado) return;
+    const cartao = meios.find((m) => m.id === meioForm)?.tipo === 'cartao';
+    $('#lanc-pago').checked = !cartao && ($('#lanc-data').value || hoje()) <= hoje();
+  }
+
+  function marcarTipo(tipo) {
+    tipoForm = tipo;
+    $$('#lanc-tipo [data-tipo]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.tipo === tipo)));
+    $$('#form-lancamento .so-despesa').forEach((el) => { el.hidden = tipo !== 'despesa'; });
+    desenharCategoriasForm();
+  }
+  function marcarGrupo(grupo) {
+    grupoForm = grupo;
+    $$('#lanc-grupos [data-grupo]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.grupo === grupo)));
+  }
+  function marcarMeio(id) {
+    meioForm = id;
+    $$('#lanc-meios .chip').forEach((b) => b.setAttribute('aria-pressed', String(Number(b.dataset.id) === id)));
+    atualizarMesForm();
+    sugerirPago();
+  }
+  function desenharMeiosForm(selecionado) {
+    $('#lanc-meios').innerHTML = meios.filter((m) => m.ativo || m.id === selecionado)
+      .map((m) => `<button class="chip" type="button" data-id="${m.id}" aria-pressed="false">${esc(m.nome)}</button>`).join('');
+  }
+  function desenharCategoriasForm(selecionada = $('#lanc-categoria').value) {
+    const lista = categorias.filter((c) => c.tipo === tipoForm && (c.ativo || String(c.id) === String(selecionada)));
+    $('#lanc-categoria').innerHTML = '<option value="">Sem categoria</option>' +
+      lista.map((c) => `<option value="${c.id}">${esc(c.nome)}</option>`).join('');
+    $('#lanc-categoria').value = lista.some((c) => String(c.id) === String(selecionada)) ? String(selecionada) : '';
+  }
+
+  function abrirLancamento(l = null) {
+    if (modoLeitura) return;
+    editando = l;
+    mesTocado = Boolean(l);
+    pagoTocado = Boolean(l);
+    const c = l ? centavos(l.valor) : 0;
+    const meioInicial = l ? l.meio_pagamento_id : ([...ultimos.values()][0]?.meio_pagamento_id ?? null);
+    $('#titulo-lancamento').textContent = l ? 'Editar lançamento' : 'Novo lançamento';
+    $('#excluir-lancamento').hidden = !l;
+    $('#lanc-valor').value = l ? valorCampo(Math.abs(c)) : '';
+    $('#lanc-descricao').value = l?.descricao ?? '';
+    $('#lanc-data').value = l?.data ?? hoje();
+    $('#lanc-pago').checked = l ? l.pago : true;
+    $('#lanc-reembolso').checked = c < 0;
+    $('#lanc-obs').value = l?.observacao ?? '';
+    marcarTipo(l?.tipo ?? 'despesa');
+    marcarGrupo(l?.grupo ?? null);
+    desenharCategoriasForm(l?.categoria_id ?? '');
+    desenharMeiosForm(meioInicial);
+    marcarMeio(meioInicial);
+    if (l) atualizarMesForm(l.mes);
+    abrirDialogo('#dlg-lancamento');
+    if (!l) $('#lanc-valor').focus();
+  }
+
+  $('#novo-lancamento').addEventListener('click', () => abrirLancamento());
+  $('#lanc-tipo').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-tipo]');
+    if (b) marcarTipo(b.dataset.tipo);
+  });
+  $('#lanc-grupos').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-grupo]');
+    if (b) marcarGrupo(b.dataset.grupo);
+  });
+  $('#lanc-meios').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-id]');
+    if (b) marcarMeio(Number(b.dataset.id));
+  });
+  // A categoria sugere o grupo quando ele ainda não foi escolhido
+  $('#lanc-categoria').addEventListener('change', () => {
+    const cat = categorias.find((c) => String(c.id) === $('#lanc-categoria').value);
+    if (cat?.grupo_padrao && !grupoForm) marcarGrupo(cat.grupo_padrao);
+  });
+  $('#lanc-data').addEventListener('change', () => { atualizarMesForm(); sugerirPago(); });
+  $('#lanc-mes').addEventListener('change', () => { mesTocado = true; });
+  $('#lanc-pago').addEventListener('change', () => { pagoTocado = true; });
+
+  // Descrição já usada: repete o que foi lançado da última vez (sem apagar o que já foi preenchido)
+  $('#lanc-descricao').addEventListener('change', () => {
+    if (editando) return;
+    const anterior = ultimos.get(normalizar($('#lanc-descricao').value.trim()));
+    if (!anterior) return;
+    marcarTipo(anterior.tipo);
+    if (anterior.grupo) marcarGrupo(anterior.grupo);
+    desenharCategoriasForm(anterior.categoria_id ?? '');
+    if (anterior.meio_pagamento_id) marcarMeio(anterior.meio_pagamento_id);
+    if (!$('#lanc-valor').value) {
+      const c = centavos(anterior.valor);
+      $('#lanc-valor').value = valorCampo(Math.abs(c));
+      $('#lanc-reembolso').checked = c < 0;
+    }
+  });
+
+  $('#form-lancamento').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const c = lerReais($('#lanc-valor').value);
+    const descricao = $('#lanc-descricao').value.trim();
+    const despesa = tipoForm === 'despesa';
+    if (!c) return aviso('Informe um valor maior que zero, como 59,90.', true);
+    if (!descricao) return aviso('Informe a descrição.', true);
+    if (!$('#lanc-data').value) return aviso('Informe a data.', true);
+    if (!meioForm) return aviso('Escolha o meio de pagamento.', true);
+    if (despesa && !grupoForm) return aviso('Escolha o grupo: Essencial, Diversão ou Investimento.', true);
+
+    const registro = {
+      tipo: tipoForm,
+      data: $('#lanc-data').value,
+      mes: $('#lanc-mes').value,
+      descricao,
+      valor: paraBanco(despesa && $('#lanc-reembolso').checked ? -c : c),
+      grupo: despesa ? grupoForm : null,
+      categoria_id: Number($('#lanc-categoria').value) || null,
+      meio_pagamento_id: meioForm,
+      pago: $('#lanc-pago').checked,
+      observacao: $('#lanc-obs').value.trim() || null,
+    };
+    const botao = $('#salvar-lancamento');
+    botao.disabled = true;
+    const { error } = editando
+      ? await supabase.from('lancamentos').update(registro).eq('id', editando.id)
+      : await supabase.from('lancamentos').insert(registro);
+    botao.disabled = false;
+    if (error) return aviso('Não foi possível salvar: ' + error.message, true);
+
+    fecharDialogo('#dlg-lancamento');
+    aviso(registro.mes === mesAtual
+      ? (editando ? 'Lançamento atualizado!' : 'Lançamento salvo!')
+      : `Salvo em ${nomeMes(registro.mes).toLowerCase()} de ${registro.mes.slice(0, 4)}!`);
+    await Promise.all([carregarLancamentos(), carregarHistorico()]);
+  });
+
+  $('#excluir-lancamento').addEventListener('click', async () => {
+    if (!editando || !confirm(`Excluir "${editando.descricao}"?`)) return;
+    const { error } = await supabase.from('lancamentos').delete().eq('id', editando.id);
+    if (error) return aviso('Não foi possível excluir: ' + error.message, true);
+    fecharDialogo('#dlg-lancamento');
+    aviso('Lançamento excluído!');
+    await Promise.all([carregarLancamentos(), carregarHistorico()]);
+  });
 </script>
 </body>
 </html>

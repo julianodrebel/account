@@ -26,9 +26,9 @@ git switch develop          # base para qualquer trabalho novo
 Não leia o arquivo inteiro quando ele crescer: localize a seção com busca (`grep -n`) e leia só o trecho necessário.
 
 1. **`<head>`**: metas (`theme-color` igual a `--bg`), fontes e Chart.js.
-2. **`<style>`**: tokens em `:root`, depois blocos marcados com `/* ---------- nome ---------- */` (campos e botões, login, estrutura do app, mês) e, no fim, `@media (min-width: 960px)` com todo o layout de desktop.
+2. **`<style>`**: tokens em `:root`, depois blocos marcados com `/* ---------- nome ---------- */` (campos e botões, login, estrutura do app, sheets, mês, lançamentos) e, no fim, `@media (min-width: 960px)` com todo o layout de desktop.
 3. **Markup**: `#tela-login`, `#tela-app` (com `nav.tabbar` e `.conteudo`, onde cada aba é uma `section.aba#aba-<nome>`: `mes`, `lancamentos`, `fixas`, `evolucao`) e, no fim do `<body>`, os `<dialog class="sheet">`.
-4. **`<script type="module">`**: blocos marcados com `// ---------- nome ----------`, nesta ordem: configuração do Supabase, utilidades, autenticação, modo leitura, abas e mês.
+4. **`<script type="module">`**: blocos marcados com `// ---------- nome ----------`, nesta ordem: configuração do Supabase, utilidades (inclui dinheiro), sheets, autenticação, modo leitura, abas, mês, listas (meios de pagamento e categorias), lançamentos, histórico de descrições (autocompletar) e lançamento rápido.
 
 Código novo vai no bloco correspondente. Se for um assunto novo, crie um bloco com o mesmo estilo de marcador, na posição que faça sentido.
 
@@ -48,13 +48,14 @@ Código novo vai no bloco correspondente. Se for um assunto novo, crie um bloco 
   ```
   Ao salvar, desabilite o botão (`botao.disabled = true`) durante a chamada.
 - Para feedback ao usuário use `aviso(msg)` (sucesso) ou `aviso(msg, true)` (erro). Não use `alert()`.
-- Para dialogs use `abrirDialogo('#id')` e `fecharDialogo('#id')` (copiar do gym quando o primeiro sheet for criado). Botões com `data-fechar` fecham o dialog.
+- Para dialogs use `abrirDialogo('#id')` e `fecharDialogo('#id')`. Botões com `data-fechar` fecham o dialog.
 - Use os helpers que já existem em vez de criar novos:
   - Datas: `hoje()`, `isoLocal()`, `fmtData()`, `fmtDia()`. Não use `toISOString()` direto, porque ele usa UTC e muda o dia à noite no Brasil.
-  - Meses: `inicioMes()`, `somarMeses()`, `nomeMes()`. Um mês é sempre guardado como o 1º dia (`'2026-11-01'`).
+  - Meses: `inicioMes()`, `somarMeses()`, `nomeMes()`. Um mês é sempre guardado como o 1º dia (`'2026-11-01'`). O mês em que um lançamento é pago sai de `mesDoPagamento(data, meio)`.
+  - Dinheiro: `centavos()` (valor do banco → centavos), `fmtReais()` (centavos → `R$ 59,90`), `lerReais()` (texto digitado → centavos ou `null`), `paraBanco()` e `valorCampo()`.
   - Ordenação e busca: `porNome` e `normalizar()`, que ignoram acentos e maiúsculas.
   - Ícones: o objeto `ICONE` e o helper `svg()`.
-- **Dinheiro:** no banco é `numeric(12,2)`; no JS, some em **centavos inteiros** e formate com `Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })`. Nunca some valores em ponto flutuante direto.
+- **Dinheiro:** no banco é `numeric(12,2)`; no JS, some em **centavos inteiros** (`centavos()`) e mostre com `fmtReais()`. Nunca some valores em ponto flutuante direto.
 - **Modo leitura:** toda ação que altera dados (botões, FAB, formulários) recebe a classe `.so-dono`, que some quando a pessoa logada é leitora (`modoLeitura`). O banco também recusa a escrita, então isso é só a interface.
 - **Não adicione dependências, frameworks, etapas de build nem divida o arquivo** sem combinar antes. A simplicidade de um arquivo só é intencional.
 - O texto da interface é em **português do Brasil**.
@@ -66,8 +67,11 @@ Schema **`financas`**, no mesmo projeto do gym. O client é criado com `{ db: { 
 | Tabela | Conteúdo |
 | --- | --- |
 | `leitores` | Quem pode ler os dados de quem (`dono_id`, `leitor_id`). Mantida pelo SQL Editor; o app só lê |
+| `meios_pagamento` | Lista comum (sem `user_id`), mantida pelo SQL Editor; o app só lê. `tipo` (`cartao`, `pix`, `boleto`, `folha`, `beneficio`, `dinheiro`, `outro`); cartões têm `dia_fechamento` e `dia_vencimento`; `ativo = false` esconde |
+| `categorias` | Lista comum, mantida pelo SQL Editor; o app só lê. `tipo` (`despesa`/`receita`) e `grupo_padrao` (grupo 50/30/20 sugerido) |
+| `lancamentos` | Cada gasto ou receita. `tipo`, `data`, `mes` (1º dia do mês em que é pago), `descricao`, `valor` (despesa negativa = reembolso), `grupo` (`essencial`/`diversao`/`investimento`, obrigatório só em despesa), `categoria_id`, `meio_pagamento_id`, `pago`, `observacao` |
 
-Tabelas planejadas para as próximas etapas: `lancamentos` (cada gasto ou receita, com `mes` = mês em que é pago), `contas_fixas`, `parcelamentos`, e as listas comuns `meios_pagamento` e `categorias` (sem `user_id`, mantidas pelo SQL Editor, só leitura pelo app, como `grupos_musculares` no gym).
+Tabelas planejadas para as próximas etapas: `contas_fixas` e `parcelamentos` (com `lancamentos.conta_fixa_id`, `parcelamento_id` e `parcela`).
 
 - **Toda tabela nova precisa, no mesmo script:** `GRANT` para `authenticated` (e `service_role`), RLS e policy. Desde 30/10/2026 o Supabase não dá mais acesso automático às tabelas novas; sem o `GRANT` a API responde *permission denied* (42501). **Nunca dê acesso ao papel `anon`.**
 - Tabelas com dados do usuário têm `user_id uuid not null default auth.uid()`. **Não envie `user_id` nos inserts.**
@@ -88,6 +92,10 @@ Tabelas planejadas para as próximas etapas: `lancamentos` (cada gasto ou receit
 - **Categorias e meios de pagamento** são listas fixas mantidas pelo SQL Editor, sem tela. As metas 50/30/20 ficam numa constante no código.
 - **Contas fixas e parcelas** do mês são criadas automaticamente como pendentes ao abrir o mês, sem duplicar (`unique`).
 - **Reembolso** é lançamento com valor negativo na mesma categoria, como na planilha.
+- **Cartão:** compra a partir do dia de fechamento vai para a próxima fatura; se o vencimento é antes (ou no dia) do fechamento, a fatura vence no mês seguinte ao fechamento. Sem os dois dias cadastrados, o mês é o da data. O mês pode ser trocado à mão no formulário.
+- **"Já foi pago" no formulário:** compra no cartão começa como *a pagar* (a fatura ainda não foi paga); o resto começa pago se a data já passou. Depois que o usuário mexe na caixa, o app não muda mais.
+- **Meio de pagamento é obrigatório** no lançamento e vem preenchido com o do lançamento mais recente. Categoria é opcional.
+- **Autocompletar:** a descrição usa um `<datalist>` com as descrições já usadas. Escolher uma repete tipo, grupo, categoria e meio da última vez, e o valor só se o campo estiver vazio.
 
 ## Git e fluxo de trabalho
 
