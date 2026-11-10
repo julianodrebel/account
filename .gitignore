@@ -1,0 +1,10 @@
+# Credenciais OAuth baixadas do Google Cloud — nunca commitar
+client_secret*.json
+
+# Dados financeiros pessoais: a planilha exportada e o SQL gerado pela importação
+*.xlsx
+*.csv
+tools/saida/
+
+node_modules
+.wrangler
