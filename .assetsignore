@@ -1,0 +1,12 @@
+# O diretório de assets é a raiz do repositório: só index.html deve ir para o site
+.git
+.gitignore
+.assetsignore
+.wrangler
+node_modules
+wrangler.jsonc
+*.md
+tools
+client_secret*.json
+*.xlsx
+*.csv

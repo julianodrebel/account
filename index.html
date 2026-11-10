@@ -1,0 +1,401 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0E0F11">
+<meta name="color-scheme" content="dark">
+<title>Minhas Finanças</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<style>
+  :root {
+    --bg: #0E0F11; --superficie: #17191C; --superficie-2: #202328; --nav: #141619;
+    --lateral: #111316; --lateral-borda: #1E2125;
+    --borda: #2A2E34; --borda-suave: #22252A; --borda-forte: #3A3F47;
+    --texto: #F2F3F5; --texto-2: #C9CDD3; --suave: #9BA1AA; --apagado: #6B717A;
+    --destaque: #FF6A3D; --destaque-hover: #FF7D55; --destaque-tinta: #1B0D06; --destaque-fundo: #2A1A13;
+    --ok: #4CC38A; --ok-fundo: rgba(76, 195, 138, .1); --desce: #FF8A63; --erro: #E5484D;
+    --fonte: Barlow, "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+    --fonte-titulo: "Barlow Condensed", "Arial Narrow", Barlow, system-ui, sans-serif;
+    --raio: 16px; --raio-p: 12px;
+    --altura-nav: 72px;
+    --seguro-baixo: env(safe-area-inset-bottom, 0px);
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; background: var(--bg); color: var(--texto); font: 16px/1.45 var(--fonte);
+         -webkit-tap-highlight-color: transparent; }
+  [hidden] { display: none !important; }
+  h1, h2, h3, p { margin: 0; }
+  input, select, textarea, button { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  :focus-visible { outline: 2px solid var(--destaque); outline-offset: 2px; }
+  svg { flex: none; }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .num-fonte { font-family: var(--fonte-titulo); font-variant-numeric: tabular-nums; }
+
+  /* ---------- campos e botões ---------- */
+  label, .rotulo-campo { display: block; font-size: .8125rem; font-weight: 600; color: var(--suave); margin-bottom: 6px; }
+  input, select, textarea { width: 100%; min-height: 48px; padding: 0 14px; border-radius: var(--raio-p);
+         border: 1px solid var(--borda); background: var(--superficie-2); color: var(--texto); font-size: 16px; }
+  input::placeholder { color: var(--apagado); }
+  .campo { margin-bottom: 14px; }
+
+  .botao { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px;
+           padding: 0 18px; border-radius: 14px; border: 1px solid var(--borda); background: transparent;
+           color: var(--texto); font-weight: 600; font-size: 15px; text-decoration: none; }
+  .botao:disabled { opacity: .5; cursor: default; }
+  .primario { background: var(--destaque); border-color: var(--destaque); color: var(--destaque-tinta);
+              font-family: var(--fonte-titulo); font-size: 20px; font-weight: 700; letter-spacing: .01em; }
+  .primario:hover { background: var(--destaque-hover); }
+  .grande { width: 100%; min-height: 56px; border-radius: var(--raio); font-size: 22px; }
+  .icone { width: 44px; height: 44px; min-height: 44px; padding: 0; border-radius: 22px; border: 0;
+           background: transparent; color: var(--suave); display: inline-grid; place-items: center; }
+  .icone:hover { color: var(--texto); background: var(--superficie-2); }
+  .icone.perigo:hover { color: var(--erro); }
+
+  .sobretitulo { font-size: .8125rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--suave); }
+  .cartao { background: var(--superficie); border: 1px solid var(--borda); border-radius: 20px; }
+  .vazio { color: var(--suave); text-align: center; padding: 28px 16px; }
+
+  /* ---------- login ---------- */
+  .login { min-height: 100vh; min-height: 100dvh; display: grid; place-items: center; padding: 24px 16px; }
+  .login-caixa { width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 24px; }
+  .marca { display: flex; align-items: center; gap: 12px; }
+  .marca-icone { width: 44px; height: 44px; border-radius: 12px; background: var(--destaque); color: var(--destaque-tinta);
+                 display: grid; place-items: center; }
+  .marca-nome { font-family: var(--fonte-titulo); font-size: 32px; font-weight: 700; line-height: 1; }
+  .login form { padding: 20px; }
+  .login h2 { font-family: var(--fonte-titulo); font-size: 26px; margin-bottom: 16px; }
+  .ou { display: flex; align-items: center; gap: 12px; color: var(--suave); font-size: .875rem; margin: 18px 0; }
+  .ou::before, .ou::after { content: ""; flex: 1; border-top: 1px solid var(--borda); }
+  #entrar-google { width: 100%; }
+
+  /* ---------- estrutura do app ---------- */
+  .conteudo { max-width: 640px; margin: 0 auto;
+              padding: 0 16px calc(var(--altura-nav) + var(--seguro-baixo) + 24px); }
+  .pagina-topo { display: flex; flex-direction: column; gap: 14px; padding: 24px 0 16px; }
+  .pagina-topo h1, .titulo-pagina { font-family: var(--fonte-titulo); font-size: 34px; font-weight: 700; line-height: 1; }
+
+  .tabbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr)); height: calc(var(--altura-nav) + var(--seguro-baixo));
+            padding-bottom: var(--seguro-baixo); background: var(--nav); border-top: 1px solid var(--borda-suave); }
+  .tabbar .marca { display: none; }
+  .nav-botao { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+               background: transparent; border: 0; color: var(--suave); font-size: 12px; font-weight: 600; padding: 0; }
+  .nav-botao .pilula { display: grid; place-items: center; width: 52px; height: 30px; border-radius: 15px; }
+  .nav-botao[aria-current="page"] { color: var(--destaque); font-weight: 700; }
+  .nav-botao[aria-current="page"] .pilula { background: var(--destaque-fundo); }
+
+  .conta { position: relative; flex: none; }
+  .avatar { width: 44px; height: 44px; border-radius: 22px; background: var(--superficie-2); border: 1px solid var(--borda);
+            font-weight: 700; font-size: 15px; }
+  .menu-conta { position: absolute; right: 0; top: 52px; z-index: 30; width: 240px; padding: 12px;
+                display: flex; flex-direction: column; gap: 10px; background: var(--superficie-2); border: 1px solid var(--borda);
+                border-radius: var(--raio); box-shadow: 0 12px 32px rgba(0,0,0,.5); }
+  .menu-conta small { color: var(--suave); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .selo-leitura { align-self: flex-start; padding: 4px 10px; border-radius: 12px; background: var(--superficie);
+                  border: 1px solid var(--borda-forte); color: var(--texto-2); font-size: 12px; font-weight: 700; }
+
+  /* ---------- mês ---------- */
+  .topo-mes { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 20px 0 16px; }
+  .seletor-mes { display: flex; align-items: center; gap: 4px; min-width: 0; }
+  .seletor-mes .icone { color: var(--texto-2); }
+  .seletor-mes h1 { min-width: 0; text-align: center; white-space: nowrap; }
+  .seletor-mes h1 small { display: block; font-family: var(--fonte); font-size: .8125rem; font-weight: 700; letter-spacing: .08em;
+                          text-transform: uppercase; color: var(--suave); margin-bottom: 4px; }
+
+  #aviso { position: fixed; left: 50%; bottom: calc(var(--altura-nav) + var(--seguro-baixo) + 88px); z-index: 40;
+           transform: translate(-50%, 30px); opacity: 0; pointer-events: none;
+           background: var(--ok); color: var(--bg); font-weight: 600; padding: 12px 18px; border-radius: 12px;
+           transition: transform .25s, opacity .25s; max-width: calc(100% - 32px); box-shadow: 0 8px 24px rgba(0,0,0,.4); }
+  #aviso.visivel { transform: translate(-50%, 0); opacity: 1; }
+  #aviso.erro { background: var(--erro); color: #fff; }
+
+  /* ---------- desktop / tablet ---------- */
+  @media (min-width: 960px) {
+    #tela-app { display: grid; grid-template-columns: 248px minmax(0, 1fr); min-height: 100vh; }
+    #tela-app[hidden] { display: none !important; }
+    .tabbar { position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; gap: 4px;
+              padding: 24px 16px; background: var(--lateral); border-top: 0; border-right: 1px solid var(--lateral-borda); }
+    .tabbar .marca { display: flex; padding: 0 8px; margin-bottom: 24px; }
+    .tabbar .marca-icone { width: 36px; height: 36px; border-radius: 10px; }
+    .tabbar .marca-nome { font-size: 24px; }
+    .nav-botao { flex-direction: row; justify-content: flex-start; gap: 12px;
+                 height: 44px; padding: 0 12px; border-radius: var(--raio-p); font-size: 15px; color: var(--texto-2); }
+    .nav-botao .pilula { width: auto; height: auto; background: none !important; }
+    .nav-botao:hover { background: var(--superficie); }
+    .nav-botao[aria-current="page"] { background: var(--destaque-fundo); }
+    .conteudo { max-width: 1120px; padding: 12px 40px 48px; margin: 0; width: 100%; }
+    .topo-mes { padding-top: 28px; }
+    #aviso { bottom: 32px; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body>
+<main>
+  <!-- ============ LOGIN ============ -->
+  <section id="tela-login" class="login" hidden>
+    <div class="login-caixa">
+      <div class="marca">
+        <span class="marca-icone"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="18" height="14" rx="2"/><path d="M3 10h18M16 15h2"/></svg></span>
+        <span class="marca-nome">Minhas Finanças</span>
+      </div>
+      <form id="form-login" class="cartao">
+        <h2>Entrar</h2>
+        <div class="campo">
+          <label for="email">E-mail</label>
+          <input id="email" type="email" autocomplete="email" required>
+        </div>
+        <div class="campo">
+          <label for="senha">Senha</label>
+          <input id="senha" type="password" minlength="6" autocomplete="current-password" required>
+        </div>
+        <button class="botao primario grande" type="submit">Entrar</button>
+        <div class="ou">ou</div>
+        <button id="entrar-google" class="botao" type="button">Entrar com Google</button>
+      </form>
+    </div>
+  </section>
+
+  <!-- ============ APP ============ -->
+  <section id="tela-app" hidden>
+    <nav class="tabbar" aria-label="Principal">
+      <div class="marca">
+        <span class="marca-icone"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="18" height="14" rx="2"/><path d="M3 10h18M16 15h2"/></svg></span>
+        <span class="marca-nome">Minhas Finanças</span>
+      </div>
+      <button class="nav-botao" data-aba="mes" type="button">
+        <span class="pilula"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></span>Mês</button>
+      <button class="nav-botao" data-aba="lancamentos" type="button">
+        <span class="pilula"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg></span>Lançamentos</button>
+      <button class="nav-botao" data-aba="fixas" type="button">
+        <span class="pilula"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 2l4 4-4 4"/><path d="M3 11V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4"/><path d="M21 13v2a3 3 0 0 1-3 3H3"/></svg></span>Fixas</button>
+      <button class="nav-botao" data-aba="evolucao" type="button">
+        <span class="pilula"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg></span>Evolução</button>
+    </nav>
+
+    <div class="conteudo">
+      <!-- Mês -->
+      <section id="aba-mes" class="aba">
+        <header class="topo-mes">
+          <div class="seletor-mes">
+            <button id="mes-anterior" class="icone" type="button" aria-label="Mês anterior">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
+            </button>
+            <h1 class="titulo-pagina"><small id="ano-mes"></small><span id="nome-mes"></span></h1>
+            <button id="mes-seguinte" class="icone" type="button" aria-label="Próximo mês">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+            </button>
+          </div>
+          <div class="conta">
+            <button id="avatar" class="avatar" type="button" aria-label="Conta" aria-haspopup="true" aria-expanded="false" aria-controls="menu-conta"></button>
+            <div id="menu-conta" class="menu-conta" hidden>
+              <small id="usuario"></small>
+              <span id="selo-leitura" class="selo-leitura" hidden>Somente leitura</span>
+              <button id="sair" class="botao" type="button">Sair</button>
+            </div>
+          </div>
+        </header>
+        <div class="cartao vazio">O resumo do mês, com o que falta pagar, chega nas próximas etapas.</div>
+      </section>
+
+      <!-- Lançamentos -->
+      <section id="aba-lancamentos" class="aba" hidden>
+        <header class="pagina-topo"><h1>Lançamentos</h1></header>
+        <div class="cartao vazio">Os lançamentos do mês aparecem aqui a partir da próxima etapa.</div>
+      </section>
+
+      <!-- Fixas -->
+      <section id="aba-fixas" class="aba" hidden>
+        <header class="pagina-topo"><h1>Contas fixas</h1></header>
+        <div class="cartao vazio">Contas fixas e parcelamentos aparecem aqui em breve.</div>
+      </section>
+
+      <!-- Evolução -->
+      <section id="aba-evolucao" class="aba" hidden>
+        <header class="pagina-topo"><h1>Evolução</h1></header>
+        <div class="cartao vazio">Os gráficos dos últimos 12 meses aparecem aqui em breve.</div>
+      </section>
+    </div>
+  </section>
+</main>
+
+<div id="aviso" role="status"></div>
+
+<script type="module">
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
+  // ================================================================
+  //  CONFIGURAÇÃO — mesmo projeto Supabase do gym, schema "financas"
+  //  (painel do projeto → botão "Connect" ou Project Settings → API)
+  // ================================================================
+  const SUPABASE_URL = 'https://aqymnknfwjiyhqzwyuas.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_Io1jQve-Tf8JA0BTiyxOwg_j2C1McYY';   // chave "publishable" (pública por design)
+  const SCHEMA = 'financas';
+  // ================================================================
+
+  const $ = (seletor) => document.querySelector(seletor);
+  const $$ = (seletor) => document.querySelectorAll(seletor);
+
+  const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, { db: { schema: SCHEMA } });
+
+  // ---------- utilidades ----------
+  const esc = (s) => String(s).replace(/[&<>"']/g, (c) =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+  function isoLocal(d) {
+    const c = new Date(d);
+    c.setMinutes(c.getMinutes() - c.getTimezoneOffset());
+    return c.toISOString().slice(0, 10);
+  }
+  const hoje = () => isoLocal(new Date());
+  function fmtData(iso) {
+    const [a, m, d] = iso.split('-');
+    return `${d}/${m}/${a}`;
+  }
+  const DIAS = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'];
+  const MESES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+  const MESES_LONGOS = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+    'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+  const dataDeIso = (iso) => { const [a, m, d] = iso.split('-').map(Number); return new Date(a, m - 1, d); };
+  // "qui, 5 nov" (com o ano quando não é o ano atual)
+  function fmtDia(iso) {
+    const d = dataDeIso(iso);
+    const ano = d.getFullYear() !== new Date().getFullYear() ? ` ${d.getFullYear()}` : '';
+    return `${DIAS[d.getDay()]}, ${d.getDate()} ${MESES[d.getMonth()]}${ano}`;
+  }
+  // Meses são guardados como o 1º dia do mês: '2026-11-01'
+  const inicioMes = (iso) => iso.slice(0, 7) + '-01';
+  function somarMeses(iso, n) {
+    const d = dataDeIso(iso);
+    return isoLocal(new Date(d.getFullYear(), d.getMonth() + n, 1));
+  }
+  const nomeMes = (iso) => MESES_LONGOS[dataDeIso(iso).getMonth()];
+
+  const porNome = (a, b) => a.nome.localeCompare(b.nome, 'pt-BR');
+  const normalizar = (s) => String(s).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+
+  const svg = (d, extra = '') =>
+    `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ${extra}>${d}</svg>`;
+  const ICONE = {
+    lapis: svg('<path d="M4 20h4L19 9l-4-4L4 16z"/>'),
+    lixo: svg('<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/>'),
+    x: svg('<path d="M6 6l12 12M18 6L6 18"/>', 'stroke-width="2.4"'),
+    check: svg('<path d="M5 12l5 5 9-10"/>', 'stroke-width="2.8"'),
+  };
+
+  let timerAviso;
+  function aviso(msg, erro = false) {
+    const t = $('#aviso');
+    t.textContent = msg;
+    t.className = erro ? 'erro visivel' : 'visivel';
+    clearTimeout(timerAviso);
+    timerAviso = setTimeout(() => { t.className = ''; }, 3500);
+  }
+
+  // ---------- autenticação ----------
+  // Não há "Criar conta": o banco é pessoal e as contas são criadas pelo painel do Supabase
+  $('#form-login').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = $('#email').value.trim();
+    const password = $('#senha').value;
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) aviso('Não foi possível entrar: ' + error.message, true);
+  });
+
+  // Redireciona para o Google; na volta o supabase-js lê a sessão da URL e dispara onAuthStateChange
+  $('#entrar-google').addEventListener('click', async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: location.origin + location.pathname },
+    });
+    if (error) aviso('Não foi possível entrar com Google: ' + error.message, true);
+  });
+
+  $('#sair').addEventListener('click', () => {
+    fecharMenuConta();
+    supabase.auth.signOut();
+  });
+
+  // Menu da conta (avatar no topo da aba Mês)
+  function fecharMenuConta() {
+    $('#menu-conta').hidden = true;
+    $('#avatar').setAttribute('aria-expanded', 'false');
+  }
+  $('#avatar').addEventListener('click', (e) => {
+    e.stopPropagation();
+    const abrir = $('#menu-conta').hidden;
+    $('#menu-conta').hidden = !abrir;
+    $('#avatar').setAttribute('aria-expanded', String(abrir));
+  });
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.conta')) fecharMenuConta();
+  });
+
+  let usuarioAtual = null;
+  // setTimeout evita chamar o Supabase de dentro do callback (recomendação da documentação)
+  supabase.auth.onAuthStateChange((_evento, session) => {
+    setTimeout(() => mostrarTela(session), 0);
+  });
+
+  async function mostrarTela(session) {
+    const logado = Boolean(session);
+    $('#tela-login').hidden = logado;
+    $('#tela-app').hidden = !logado;
+    if (!logado) { usuarioAtual = null; return; }
+    if (usuarioAtual === session.user.id) return;   // ex.: renovação de token
+
+    usuarioAtual = session.user.id;
+    const email = session.user.email ?? '';
+    $('#usuario').textContent = email;
+    $('#avatar').textContent = (email[0] ?? '?').toUpperCase();
+    mesAtual = inicioMes(hoje());
+    desenharMes();
+    abrirAba('mes');
+    await carregarLeitura();
+  }
+
+  // ---------- modo leitura ----------
+  // Quem aparece como leitor em financas.leitores vê os dados do dono, sem poder alterar nada.
+  // As ações de escrita levam a classe .so-dono e somem nesse modo.
+  let modoLeitura = false;
+  let donoId = null;
+
+  async function carregarLeitura() {
+    const { data, error } = await supabase.from('leitores').select('dono_id').eq('leitor_id', usuarioAtual);
+    if (error) return aviso('Não foi possível ler o banco: ' + error.message, true);
+    donoId = data[0]?.dono_id ?? usuarioAtual;
+    modoLeitura = data.length > 0;
+    $('#selo-leitura').hidden = !modoLeitura;
+    $$('.so-dono').forEach((el) => { el.hidden = modoLeitura; });
+  }
+
+  // ---------- abas ----------
+  $$('[data-aba]').forEach((b) =>
+    b.addEventListener('click', () => abrirAba(b.dataset.aba)));
+
+  function abrirAba(nome) {
+    $$('.nav-botao').forEach((b) => {
+      if (b.dataset.aba === nome) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
+    });
+    $$('.aba').forEach((s) => { s.hidden = s.id !== 'aba-' + nome; });
+    window.scrollTo(0, 0);
+  }
+
+  // ---------- mês ----------
+  let mesAtual = inicioMes(hoje());
+
+  function desenharMes() {
+    $('#nome-mes').textContent = nomeMes(mesAtual);
+    $('#ano-mes').textContent = mesAtual.slice(0, 4);
+  }
+  $('#mes-anterior').addEventListener('click', () => { mesAtual = somarMeses(mesAtual, -1); desenharMes(); });
+  $('#mes-seguinte').addEventListener('click', () => { mesAtual = somarMeses(mesAtual, 1); desenharMes(); });
+</script>
+</body>
+</html>
