@@ -54,7 +54,7 @@ Use sempre as variáveis. **Não escreva hex novo no CSS.** Se faltar uma cor, c
 
 ### Gráfico
 
-Quando os gráficos chegarem, as séries usam, em ordem: `#FF6A3D`, `#5AB8E8`, `#E8C35A`, `#4CC38A`, `#B497FF`, `#FF8FB8` (constante `CORES` no JS, igual ao gym). Eixos, grade e tooltip usam cores escritas à mão que espelham os tokens de superfície e texto (o Chart.js não lê variáveis CSS). Se mudar um token, atualize também os valores escritos no `desenharGrafico()`.
+Os grupos 50/30/20 têm cor fixa nos gráficos (constante `GRUPOS` no JS): Essencial `#5AB8E8`, Diversão `#E8C35A`, Investimento `#4CC38A`. A linha da receita é `#F2F3F5` e o gráfico de um item usa `#FF6A3D`. Eixos, grade e tooltip usam cores escritas à mão que espelham os tokens de superfície e texto (o Chart.js não lê variáveis CSS). Se mudar um token, atualize também os valores escritos em `eixoX`, `eixoY` e `dica`, no bloco de evolução.
 
 ## Tipografia
 
@@ -153,7 +153,10 @@ Reutilize estes componentes antes de criar um novo. Os marcados com *(gym)* aind
 | `.grupo-titulo` | Sobretítulo de seção com um total à direita | Ex.: "Pendentes · R$ 1.490,06 a pagar", "Despesas · R$ 59,90 por mês" |
 | `.encerradas` | Seção de itens que não valem mais (contas encerradas, parcelamentos concluídos) | Linhas com 60% de opacidade |
 | `.parcela` | Número da parcela ao lado da descrição | "GoPro 3/10", em `--suave` |
-| `.dica` | Texto de ajuda dentro de sheets | 14px, `--suave` |
+| `.dica` | Texto de ajuda dentro de sheets e cards | 14px, `--suave` |
+| `.barras-cat` / `.linha-cat` / `.trilho` | Lista com nome, valor e uma barra horizontal embaixo | Gasto por categoria (barra neutra) e regra 50/30/20: barra `.dentro` (verde), `.acima` (laranja-claro) ou `.abaixo` (cinza), com um traço `i` marcando a meta. O texto embaixo diz a porcentagem e a meta, para a cor não ser o único sinal |
+| `.grafico-cartao` / `.grafico-box` | Card com um gráfico do Chart.js | 260px de altura (340px no gráfico largo do desktop); `canvas` com `role="img"` e `aria-label` |
+| `.evo-layout` / `.evo-larga` | Grade da aba Evolução no desktop | Gráfico por mês na linha inteira; categorias e item lado a lado |
 | `.valor-caixa` | Campo de valor com "R$" fixo à esquerda | Fonte condensada 34px, `inputmode="decimal"` |
 | `.alternar` | Linha com texto e checkbox à direita | 52px; `small` para explicação |
 | `.botao.perigo` | Botão comum vermelho | Ex.: "Excluir" ao lado de "Salvar lançamento" |

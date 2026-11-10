@@ -11,10 +11,11 @@ The whole app is a single `index.html` file: no build step, no bundler, no serve
 - **Quick entry** — the *Lançar* button opens a sheet to log an expense or income: amount (typed as `59,90` or `1.234,56`), description, date, payment method, 50/30/20 group (*Essencial*, *Diversão*, *Investimento*), category, whether it is already paid, refund (stored as a negative expense) and a note. Picking a description used before fills in its type, group, category, payment method and amount from the last time. Picking a category suggests its group.
 - **Month it is paid in** — every entry belongs to the month it is paid in. For credit cards with closing and due days set, the app puts the purchase in its bill's due month (a purchase on 20 Nov with closing on the 10th and due on the 15th goes to December) and leaves it as *a pagar* (to pay); the month can also be picked by hand.
 - **Entries** — the *Lançamentos* tab lists the selected month's entries grouped by day, with income, expenses and balance for what is shown. Search by description, category, payment method or note, and filter by group, income or entries still to pay. Tap an entry to edit or delete it.
-- **Month overview** — the *Mês* tab shows income, expenses, what is left and what is still to pay. *Pendentes* lists unpaid bills and income not yet received by due date (late ones in red); credit card purchases are grouped into one line per card bill. One tap on the circle marks a bill, or a whole card bill, as paid. Tapping a card bill shows its entries; tapping any other line opens it to fix the amount. Below, the month's spending per payment method.
+- **Month overview** — the *Mês* tab shows income, expenses, what is left and what is still to pay. *Pendentes* lists unpaid bills and income not yet received by due date (late ones in red); credit card purchases are grouped into one line per card bill. One tap on the circle marks a bill, or a whole card bill, as paid. Tapping a card bill shows its entries; tapping any other line opens it to fix the amount. Next to it, the 50/30/20 rule: what went to *Essencial*, *Diversão* and *Investimento* as a share of the month's income (of the spending, when there is no income yet) against the 50% / 30% / 20% targets, and the month's spending per payment method.
 - **Fixed bills** — in *Fixas → Contas fixas*, register bills and recurring income (Netflix, rent, salary) with amount, day of the month, payment method, group, category and first/last month. When a month from now on is opened for the first time, each fixed bill becomes a pending entry in it (only once: an entry deleted on purpose does not come back). Editing a fixed bill updates its unpaid entries from this month on.
 - **Installment purchases** — in *Fixas → Parcelamentos*, register a purchase with the installment amount, number of installments, purchase date and payment method; all installments are created at once in the months they are paid in (card bills' due day). A purchase that started before the app can start from installment *n*. The list shows how many are paid and how much is left; entries show `3/10`. Deleting a purchase deletes all its installments.
-- **Layout** — dark theme, bottom tab bar on phones (*Mês*, *Lançamentos*, *Fixas*, *Evolução*) and a sidebar on screens 960 px and wider. The floating button is *Lançar* everywhere, and *Nova conta fixa* / *Novo parcelamento* in the *Fixas* tab. *Evolução* is a placeholder for now.
+- **Progress** — the *Evolução* tab covers a period you choose (shortcuts for 6 months, 12 months, this year and everything, or any first and last month): average spending, income and balance per month and the highest month; a chart of spending per month stacked by 50/30/20 group with the income line on top; spending per category; and one item over time (pick a description such as *Luz* or *Condomínio* to see its amount month by month).
+- **Layout** — dark theme, bottom tab bar on phones (*Mês*, *Lançamentos*, *Fixas*, *Evolução*) and a sidebar on screens 960 px and wider. The floating button is *Lançar* everywhere, and *Nova conta fixa* / *Novo parcelamento* in the *Fixas* tab.
 
 > The user interface is in Brazilian Portuguese.
 
@@ -24,7 +25,7 @@ The whole app is a single `index.html` file: no build step, no bundler, no serve
 | --- | --- |
 | HTML, CSS, vanilla JavaScript (ES modules) | The app itself |
 | [supabase-js v2](https://supabase.com/docs/reference/javascript) | Auth and database access |
-| [Chart.js v4](https://www.chartjs.org/) | Charts (upcoming) |
+| [Chart.js v4](https://www.chartjs.org/) | Charts in the *Evolução* tab |
 
 Both libraries are loaded from the jsDelivr CDN.
 
@@ -525,6 +526,26 @@ npx serve .
 # or
 python -m http.server 8000
 ```
+
+### 7. Import the old spreadsheet (once)
+
+The monthly Google Sheets spreadsheet this app replaces can be imported with `tools/importar_planilha.py`. Export it as `.xlsx` and run:
+
+```bash
+pip install openpyxl
+python tools/importar_planilha.py Planilha_de_gastos.xlsx            # owner = dono_id in financas.leitores
+python tools/importar_planilha.py Planilha_de_gastos.xlsx --email you@example.com
+```
+
+It writes `tools/saida/importacao.sql`, to be run once in the SQL Editor (after all the upgrades above). That SQL:
+
+- imports every tab as entries in the tab's month (each row's own date is kept), paid unless *Pago* is unticked, plus the salary from the *RECEBIDO* block as income;
+- cleans the data: payment method spellings (`PIX`, `PX` → *Pix*, `CC C6` → *CC C6 - Vera*; unknown ones are left empty), the 50/30/20 group from *Categoria* (rows without one get the group most used for the same description), the category from *Sub Categoria* or, without one, from words in the description (`Netflix` → *Assinaturas*, `Mercado` → *Alimentação*…); rows without an amount and the total row are skipped;
+- creates the fixed bills (rows with *Custo Fixo = Sim* and no installment) and the installment purchases still running (`GoPro - 2/10`) from the last tab, starting the month after it; fixed bills or purchases with the same description that already exist are skipped, and months the app already generated get the new fixed bills' entries;
+- checks that each month's total of expenses equals the sum of the tab's *Valor* column, and rolls everything back if one does not match;
+- refuses to run again once there are entries before that month.
+
+The spreadsheet and the generated SQL contain personal data and are git-ignored.
 
 ## Deploying
 

@@ -26,9 +26,9 @@ git switch develop          # base para qualquer trabalho novo
 Não leia o arquivo inteiro quando ele crescer: localize a seção com busca (`grep -n`) e leia só o trecho necessário.
 
 1. **`<head>`**: metas (`theme-color` igual a `--bg`), fontes e Chart.js.
-2. **`<style>`**: tokens em `:root`, depois blocos marcados com `/* ---------- nome ---------- */` (campos e botões, login, estrutura do app, sheets, mês, lançamentos, resumo do mês, fixas) e, no fim, `@media (min-width: 960px)` com todo o layout de desktop.
+2. **`<style>`**: tokens em `:root`, depois blocos marcados com `/* ---------- nome ---------- */` (campos e botões, login, estrutura do app, sheets, mês, lançamentos, resumo do mês, fixas, evolução e barras) e, no fim, `@media (min-width: 960px)` com todo o layout de desktop.
 3. **Markup**: `#tela-login`, `#tela-app` (com `nav.tabbar` e `.conteudo`, onde cada aba é uma `section.aba#aba-<nome>`: `mes`, `lancamentos`, `fixas`, `evolucao`) e, no fim do `<body>`, os `<dialog class="sheet">`.
-4. **`<script type="module">`**: blocos marcados com `// ---------- nome ----------`, nesta ordem: configuração do Supabase, utilidades (inclui dinheiro), sheets, autenticação, modo leitura, abas, mês, listas (meios de pagamento e categorias), campos compartilhados dos formulários, lançamentos, histórico de descrições (autocompletar), lançamento rápido, contas fixas e parcelamentos (com os dois formulários), botão flutuante e resumo do mês.
+4. **`<script type="module">`**: blocos marcados com `// ---------- nome ----------`, nesta ordem: configuração do Supabase, utilidades (inclui dinheiro), sheets, autenticação, modo leitura, abas, mês, listas (meios de pagamento e categorias), campos compartilhados dos formulários, lançamentos, histórico de descrições (autocompletar), lançamento rápido, contas fixas e parcelamentos (com os dois formulários), botão flutuante, resumo do mês, regra 50/30/20 e evolução.
 
 Código novo vai no bloco correspondente. Se for um assunto novo, crie um bloco com o mesmo estilo de marcador, na posição que faça sentido.
 
@@ -98,6 +98,10 @@ Schema **`financas`**, no mesmo projeto do gym. O client é criado com `{ db: { 
 - **Parcelamento cria todas as parcelas ao salvar**, nos meses em que são pagas (no cartão, no dia de vencimento da fatura). Uma compra anterior ao app começa da parcela *n*; as anteriores contam como pagas no andamento. Editar muda só as parcelas não pagas; número de parcelas e meses não mudam (exclui e cadastra de novo). Excluir apaga todas as parcelas (`on delete cascade`).
 - **Pendentes na aba Mês:** compras no cartão viram uma linha por fatura, com vencimento no `dia_vencimento` do cartão; marcar a fatura marca todos os lançamentos dela como pagos.
 - **Reembolso** é lançamento com valor negativo na mesma categoria, como na planilha.
+- **Regra 50/30/20 (aba Mês):** a porcentagem de cada grupo é sobre a receita do mês; sem receita lançada, é sobre o gasto. Essencial e Diversão têm teto (verde até a meta, laranja-claro acima); Investimento tem piso (verde a partir da meta). Grupos, cores e metas ficam nas constantes `GRUPOS` e `METAS`.
+- **Evolução:** o período é escolhido por atalhos (6 meses, 12 meses, este ano, tudo) ou por "De" e "Até"; o padrão é 12 meses terminando no mês atual. As médias contam só os meses que têm lançamentos. "Um item ao longo do tempo" agrupa pela descrição sem o número da parcela (`semParcela()`); mês sem o item fica sem ponto, não vira zero.
+- **Limite de 1.000 linhas do Supabase:** consultas que podem passar disso usam `buscarTudo()`, que pagina com `.range()`. A aba Evolução usa; as consultas de um mês só não precisam.
+- **Importação da planilha (F3):** o histórico entra no mês da aba (o mês em que foi pago), com a descrição como estava (`TV - 4/21`); parcelas antigas não viram parcelamentos, porque a planilha tem números de parcela repetidos e valores trocados. Só os parcelamentos em andamento na última aba viram `parcelamentos`, com as parcelas seguintes. O salário entra como receita no dia 5 (estimado). O SQL confere o total de cada mês e desfaz tudo se não bater.
 - **Cartão:** compra a partir do dia de fechamento vai para a próxima fatura; se o vencimento é antes (ou no dia) do fechamento, a fatura vence no mês seguinte ao fechamento. Sem os dois dias cadastrados, o mês é o da data. O mês pode ser trocado à mão no formulário.
 - **"Já foi pago" no formulário:** compra no cartão começa como *a pagar* (a fatura ainda não foi paga); o resto começa pago se a data já passou. Depois que o usuário mexe na caixa, o app não muda mais.
 - **Meio de pagamento é obrigatório** no lançamento e vem preenchido com o do lançamento mais recente. Categoria é opcional.
@@ -122,4 +126,5 @@ Schema **`financas`**, no mesmo projeto do gym. O client é criado com `{ db: { 
 ## Pontos de atenção
 
 - `onAuthStateChange` chama `mostrarTela` dentro de `setTimeout`, como a documentação do Supabase recomenda. Não remova.
+- `tools/importar_planilha.py` é um script Python (fora do site, `openpyxl`) que gera `tools/saida/importacao.sql` a partir da planilha antiga, para rodar uma vez no SQL Editor. Não faz parte do app; a regra de "não adicione dependências" vale para o `index.html`.
 - O diretório de assets é a raiz do repositório. O `.assetsignore` deixa só o `index.html` ir para o site; arquivo novo que não deva ser público precisa estar coberto por ele.
